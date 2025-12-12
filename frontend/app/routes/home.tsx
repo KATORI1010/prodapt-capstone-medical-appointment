@@ -1,3 +1,4 @@
+import type { Route } from "../+types/root";
 import { Link } from "react-router";
 
 import { ClipboardPlus } from 'lucide-react';
@@ -28,7 +29,13 @@ const appintmentData = [
     },
 ]
 
-export default function Home() {
+export async function clientLoader({ request, params }: Route.ClientLoaderArgs) {
+    const res = await fetch("/api/appointments");
+    const appointments = await res.json();
+    return { appointments }
+}
+
+export default function Home({ loaderData, params }: Route.ComponentProps) {
     return (
         <main className="w-full h-30 text-center">
             <div>
@@ -54,7 +61,7 @@ export default function Home() {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {appintmentData.map(
+                            {loaderData.appointments.map(
                                 (appointment) =>
                                     <TableRow key={appointment.id} className={appointment.status === "Medical interview required" ? "bg-yellow-200" : ""}>
                                         <TableCell className="max-w-md truncate">

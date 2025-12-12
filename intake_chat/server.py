@@ -1,7 +1,8 @@
 from typing import AsyncIterator
 from dotenv import load_dotenv
 
-from agents import Agent, Runner
+from openai.types.shared import Reasoning
+from agents import Agent, Runner, ModelSettings
 from chatkit.server import ChatKitServer
 from chatkit.types import (
     ThreadMetadata,
@@ -9,6 +10,8 @@ from chatkit.types import (
     ThreadStreamEvent,
 )
 from chatkit.agents import AgentContext, simple_to_agent_input, stream_agent_response
+
+from medical_agents.medical_interview_agent import medical_interview_agent
 
 load_dotenv()
 
@@ -40,6 +43,6 @@ class MyChatKitServer(ChatKitServer[dict]):
         agent_context = AgentContext(
             thread=thread, store=self.store, request_context=context
         )
-        result = Runner.run_streamed(assistant, input_items, context=agent_context)
+        result = Runner.run_streamed(medical_interview_agent, input_items, context=agent_context)
         async for event in stream_agent_response(agent_context, result):
             yield event

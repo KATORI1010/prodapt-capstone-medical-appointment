@@ -34,7 +34,7 @@ class MedicalInterview(Base):
     severity = Column(Text, nullable=True)
     current_medications = Column(Text, nullable=True)
     allergies = Column(Text, nullable=True)
-    # created_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, nullable=True)
     appointment = relationship("Appointment", back_populates="medical_interviews")
 
 

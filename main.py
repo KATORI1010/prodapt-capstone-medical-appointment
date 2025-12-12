@@ -131,11 +131,13 @@ class MedicalInterviewForm(BaseModel):
 # Create Medical Interviews
 @app.post("/api/medical_interviews")
 async def api_create_medical_interviews(
-    medical_interview_form: Annotated[MedicalInterviewForm, Form()], db: Session = Depends(get_db)
+    medical_interview_form: Annotated[MedicalInterviewForm, Form()],
+    db: Session = Depends(get_db),
 ):
     db_medical_interview = MedicalInterview(
         appointment_id=medical_interview_form.appointment_id,
         initial_consult=medical_interview_form.initial_consult,
+        created_at=datetime.now(),
     )
     db.add(db_medical_interview)
     db.commit()
@@ -151,14 +153,10 @@ async def api_read_medical_interviews(
     db_medical_interviews = (
         db.query(MedicalInterview)
         .filter(MedicalInterview.appointment_id == appointment_id)
-        .all()
+        .order_by(desc(MedicalInterview.created_at))
+        .first()
     )
     return db_medical_interviews
-
-
-# Mount Static File for Jobify
-if not settings.PRODUCTION:
-    app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 
 
 @app.get("/{full_path:path}")

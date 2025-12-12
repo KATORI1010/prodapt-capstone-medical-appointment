@@ -1,7 +1,20 @@
-from agents import Agent
+from pathlib import Path
 
-assistant = Agent(
-    name="assistant",
-    instructions="You are a helpful assistant.",
-    model="gpt-4.1-mini",
+from openai.types.shared import Reasoning
+from agents import Agent, ModelSettings
+
+def load_prompt_md(relative_path: str) -> str:
+    base_dir = Path(__file__).resolve().parent
+    prompt_path = base_dir / relative_path
+    return Path(prompt_path).read_text(encoding="utf-8-sig")
+
+SYSTEM_PROMPT = load_prompt_md("./prompts/medical_interview_prompt.md")
+
+medical_interview_agent = Agent(
+    name="Medical Interview Agent",
+    instructions=SYSTEM_PROMPT,
+    model="gpt-5-mini",
+    model_settings=ModelSettings(
+        reasoning=Reasoning(effort="low"), verbosity="low"
+    )
 )
