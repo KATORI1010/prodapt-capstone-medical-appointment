@@ -1,0 +1,38 @@
+meta {
+  name: 1. Initialize Session GitHub
+  type: http
+  seq: 8
+}
+
+post {
+  url: https://api.githubcopilot.com/mcp
+  body: json
+  auth: none
+}
+
+headers {
+  Accept: application/json, text/event-stream
+  Content-Type: application/json
+  Authorization: Bearer github_pat_XXXXX
+}
+
+body:json {
+  {
+    "jsonrpc": "2.0",
+    "id": "init-001",
+    "method": "initialize",
+    "params": {
+      "protocolVersion": "2024-11-05",
+      "capabilities": {
+        "roots": {
+          "listChanged": false
+        },
+        "sampling": {}
+      },
+      "clientInfo": {
+        "name": "mcp-client",
+        "version": "1.0.0"
+      }
+    }
+  }
+}

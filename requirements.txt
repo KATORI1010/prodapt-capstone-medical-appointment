@@ -1,0 +1,22 @@
+fastapi[all]
+python-dotenv
+sqlalchemy==2.0.44
+psycopg2-binary==2.9.11
+pydantic==2.12.4 # Validation  
+pydantic-settings==2.12.0 # Configuration Settings
+alembic==1.17.2 # DB Migration Tool
+supabase==2.24.0 # File Storage
+testcontainers==4.13.3 # PyTest Dependencies
+pytest==9.0.1 # Testing Tool
+httpx==0.28.1 # HTTP Client
+openai==2.8.1 # LLM
+PyPDF2==3.0.1 # PDF to Text
+langchain==1.1.0 # Langchain framework
+langchain-openai==1.1.0 # Langchain Open AI interface
+langchain-qdrant==1.1.0 # Langchain with Qdrant vector DB
+pypdf==6.4.0 # PDF to Text
+pandas==2.3.3 # For data analysis
+openai-agents==0.6.2
+braintrust[openai-agents]==0.3.12 # Braintrust
+braintrust-langchain==0.1.5
+fastmcp

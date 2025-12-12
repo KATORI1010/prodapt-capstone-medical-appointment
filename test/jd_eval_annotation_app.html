@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Job Description Eval Annotator</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+  <body class="bg-slate-50 text-slate-900">
+    <div class="min-h-screen flex flex-col">
+      <header class="border-b bg-white">
+        <div class="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between gap-4">
+          <div>
+            <h1 class="text-2xl font-semibold">Job Description Eval Annotator</h1>
+            <p class="text-sm text-slate-500">
+              Review AI-edited job descriptions and mark them as pass or fail.
+            </p>
+          </div>
+          <div class="flex flex-col items-end text-sm">
+            <div id="progressText" class="font-medium">0 / 0 annotated</div>
+            <div id="remainingText" class="text-slate-500">Remaining: 0</div>
+          </div>
+        </div>
+      </header>
+
+      <main class="flex-1">
+        <div class="max-w-5xl mx-auto px-4 py-6 space-y-6">
+          <!-- File upload card -->
+          <section
+            class="bg-white rounded-2xl shadow-sm border p-4 md:p-6 space-y-4"
+          >
+            <h2 class="text-lg font-semibold flex items-center gap-2">
+              Data
+              <span
+                class="text-xs font-medium px-2 py-0.5 rounded-full bg-slate-100 text-slate-500"
+                >Upload CSVs</span
+              >
+            </h2>
+            <p class="text-sm text-slate-500">
+              Upload the input CSV and the AI output CSV. They will be matched by
+              <span class="font-mono">'Job Description'</span>.
+            </p>
+            <div class="grid gap-4 md:grid-cols-2">
+              <div>
+                <label class="text-sm font-medium block mb-1">Input CSV</label>
+                <input
+                  id="inputCsv"
+                  type="file"
+                  accept=".csv"
+                  class="block w-full text-sm file:mr-4 file:py-2 file:px-3 file:rounded-full file:border-0 file:bg-slate-900 file:text-white hover:file:bg-slate-700 cursor-pointer"
+                />
+                <p class="mt-1 text-xs text-slate-500">
+                  Columns: ID, Job Description
+                </p>
+              </div>
+              <div>
+                <label class="text-sm font-medium block mb-1">Output CSV</label>
+                <input
+                  id="outputCsv"
+                  type="file"
+                  accept=".csv"
+                  class="block w-full text-sm file:mr-4 file:py-2 file:px-3 file:rounded-full file:border-0 file:bg-slate-900 file:text-white hover:file:bg-slate-700 cursor-pointer"
+                />
+                <p class="mt-1 text-xs text-slate-500">
+                  Columns: Job Description, Summary, Fixed Description
+                </p>
+              </div>
+            </div>
+            <div id="loadStatus" class="text-xs text-slate-500"></div>
+          </section>
+
+          <!-- Annotation area -->
+          <section
+            id="annotationSection"
+            class="bg-white rounded-2xl shadow-sm border p-4 md:p-6 space-y-4 hidden"
+          >
+            <div class="flex items-center justify-between gap-2">
+              <div class="flex items-center gap-2 text-sm">
+                <span
+                  id="sampleIndexBadge"
+                  class="inline-flex items-center justify-center px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 text-xs font-medium"
+                >
+                  Sample 0 / 0
+                </span>
+                <span
+                  id="sampleStatusBadge"
+                  class="inline-flex items-center justify-center px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-500 text-xs"
+                >
+                  Not annotated
+                </span>
+              </div>
+              <div class="flex items-center gap-2 text-xs">
+                <button
+                  id="prevBtn"
+                  class="px-3 py-1.5 rounded-full border text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  Previous
+                </button>
+                <button
+                  id="nextBtn"
+                  class="px-3 py-1.5 rounded-full border text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  Next
+                </button>
+                <button
+                  id="nextUnannotatedBtn"
+                  class="px-3 py-1.5 rounded-full bg-slate-900 text-white hover:bg-slate-800 rounded-full"
+                >
+                  Next unannotated
+                </button>
+              </div>
+            </div>
+
+            <div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+              <div
+                id="progressBar"
+                class="h-2 rounded-full bg-emerald-500"
+                style="width: 0%"
+              ></div>
+            </div>
+
+            <div id="idField" class="text-xs text-slate-500"></div>
+
+            <div class="grid md:grid-cols-2 gap-4">
+              <div class="space-y-3">
+                <h3 class="text-sm font-semibold">Original Job Description</h3>
+                <div
+                  id="originalJD"
+                  class="text-sm whitespace-pre-wrap leading-relaxed border rounded-xl bg-slate-50 p-3 max-h-80 overflow-auto"
+                ></div>
+              </div>
+              <div class="space-y-3">
+                <h3 class="text-sm font-semibold">AI Output</h3>
+                <div
+                  class="space-y-3 text-sm leading-relaxed max-h-80 overflow-auto"
+                >
+                  <div>
+                    <h4
+                      class="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-1"
+                    >
+                      Summary
+                    </h4>
+                    <div
+                      id="summaryField"
+                      class="whitespace-pre-wrap border rounded-xl bg-slate-50 p-3"
+                    ></div>
+                  </div>
+                  <div>
+                    <h4
+                      class="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-1"
+                    >
+                      Fixed Description
+                    </h4>
+                    <div
+                      id="fixedJD"
+                      class="whitespace-pre-wrap border rounded-xl bg-slate-50 p-3"
+                    ></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="border-t pt-4 mt-2 space-y-4">
+              <h3 class="text-sm font-semibold">Annotation</h3>
+              <div class="flex flex-wrap items-center gap-3">
+                <button
+                  id="passBtn"
+                  class="inline-flex items-center justify-center px-4 py-2 rounded-full text-sm font-medium border border-emerald-500 text-emerald-700 bg-emerald-50 hover:bg-emerald-100"
+                >
+                  ✓ Pass
+                </button>
+                <button
+                  id="failBtn"
+                  class="inline-flex items-center justify-center px-4 py-2 rounded-full text-sm font-medium border border-rose-500 text-rose-700 bg-rose-50 hover:bg-rose-100"
+                >
+                  ✗ Fail
+                </button>
+                <p class="text-xs text-slate-500">
+                  Choose "Fail" and give a reason if the AI output is not
+                  acceptable.
+                </p>
+              </div>
+
+              <div id="failReasonContainer" class="space-y-2 hidden">
+                <div class="flex items-center justify-between gap-2">
+                  <label for="failReason" class="text-sm font-medium"
+                    >Reason for failure</label
+                  >
+                  <div class="flex items-center gap-2 text-xs">
+                    <button
+                      id="micToggleBtn"
+                      type="button"
+                      class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-full border text-slate-600 hover:bg-slate-50"
+                    >
+                      <span id="micIcon">🎤</span>
+                      <span id="micLabel">Voice input</span>
+                    </button>
+                    <span id="micStatus" class="text-slate-400">Mic off</span>
+                  </div>
+                </div>
+                <textarea
+                  id="failReason"
+                  rows="3"
+                  class="w-full text-sm border rounded-xl px-3 py-2 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-900 focus:bg-white"
+                  placeholder="Explain why this sample failed (e.g., incorrect tone, missing requirements, hallucinated skills)..."
+                ></textarea>
+                <p class="text-xs text-slate-500">
+                  Tip: You can type or use voice input. The sample will be saved
+                  and the app will jump to the next one automatically after you
+                  submit.
+                </p>
+              </div>
+
+              <div id="annotationInfo" class="text-xs text-slate-500"></div>
+            </div>
+          </section>
+
+          <!-- Summary table -->
+          <section
+            id="summarySection"
+            class="bg-white rounded-2xl shadow-sm border p-4 md:p-6 space-y-3 hidden"
+          >
+            <div class="flex items-center justify-between gap-2">
+              <h2 class="text-sm font-semibold">Overview</h2>
+              <button
+                id="downloadBtn"
+                type="button"
+                class="px-3 py-1.5 rounded-full border text-xs font-medium text-slate-700 hover:bg-slate-50"
+              >
+                Download annotations CSV
+              </button>
+            </div>
+            <div
+              id="summaryTableWrapper"
+              class="max-h-60 overflow-auto border rounded-xl bg-slate-50"
+            >
+              <table class="min-w-full text-xs">
+                <thead class="bg-slate-100 text-slate-600">
+                  <tr>
+                    <th class="px-3 py-2 text-left font-medium">#</th>
+                    <th class="px-3 py-2 text-left font-medium">ID</th>
+                    <th class="px-3 py-2 text-left font-medium">Status</th>
+                    <th class="px-3 py-2 text-left font-medium">Reason</th>
+                  </tr>
+                </thead>
+                <tbody
+                  id="summaryTableBody"
+                  class="divide-y divide-slate-200"
+                ></tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+      </main>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+    <script>
+      const inputFile = document.getElementById('inputCsv');
+      const outputFile = document.getElementById('outputCsv');
+      const loadStatus = document.getElementById('loadStatus');
+
+      const annotationSection = document.getElementById('annotationSection');
+      const summarySection = document.getElementById('summarySection');
+
+      const originalJD = document.getElementById('originalJD');
+      const summaryField = document.getElementById('summaryField');
+      const fixedJD = document.getElementById('fixedJD');
+      const idField = document.getElementById('idField');
+
+      const sampleIndexBadge = document.getElementById('sampleIndexBadge');
+      const sampleStatusBadge = document.getElementById('sampleStatusBadge');
+      const progressBar = document.getElementById('progressBar');
+      const progressText = document.getElementById('progressText');
+      const remainingText = document.getElementById('remainingText');
+
+      const prevBtn = document.getElementById('prevBtn');
+      const nextBtn = document.getElementById('nextBtn');
+      const nextUnannotatedBtn = document.getElementById('nextUnannotatedBtn');
+
+      const passBtn = document.getElementById('passBtn');
+      const failBtn = document.getElementById('failBtn');
+      const failReasonContainer = document.getElementById('failReasonContainer');
+      const failReason = document.getElementById('failReason');
+      const annotationInfo = document.getElementById('annotationInfo');
+
+      const micToggleBtn = document.getElementById('micToggleBtn');
+      const micStatus = document.getElementById('micStatus');
+      const micLabel = document.getElementById('micLabel');
+
+      const summaryTableBody = document.getElementById('summaryTableBody');
+      const downloadBtn = document.getElementById('downloadBtn');
+
+      let inputData = null;
+      let outputData = null;
+      let samples = [];
+      let annotations = [];
+      let currentIndex = 0;
+
+      let recognition = null;
+      let isRecording = false;
+
+      function parseCsvFile(file, onDone) {
+        Papa.parse(file, {
+          header: true,
+          skipEmptyLines: true,
+          complete: function (results) {
+            onDone(results.data || []);
+          },
+          error: function (err) {
+            loadStatus.textContent =
+              'Failed to parse ' + file.name + ': ' + err.message;
+            loadStatus.classList.add('text-rose-600');
+          },
+        });
+      }
+
+      function tryBuildSamples() {
+        if (!inputData || !outputData) return;
+        if (!outputData.length) return;
+
+        const inputByJD = new Map();
+        inputData.forEach((row) => {
+          const jd = (row['Job Description'] || '').trim();
+          if (!jd) return;
+          if (!inputByJD.has(jd)) {
+            inputByJD.set(jd, row);
+          }
+        });
+
+        const combined = [];
+        let matched = 0;
+        let unmatchedOutputs = 0;
+
+        outputData.forEach((row) => {
+          const jd = (row['Job Description'] || '').trim();
+          if (!jd) return;
+          const inputRow = inputByJD.get(jd);
+          if (inputRow) matched++;
+          else unmatchedOutputs++;
+
+          combined.push({
+            id: inputRow ? inputRow['ID'] || '' : '',
+            jobDescription: jd,
+            summary: row['Summary'] || '',
+            fixedDescription: row['Fixed Description'] || '',
+          });
+        });
+
+        samples = combined;
+        annotations = new Array(samples.length).fill(null);
+        currentIndex = 0;
+
+        if (!samples.length) {
+          loadStatus.textContent =
+            'Loaded CSVs but could not build any samples. Please check the column names.';
+          loadStatus.classList.add('text-rose-600');
+          return;
+        }
+
+        loadStatus.classList.remove('text-rose-600');
+        loadStatus.textContent =
+          'Built ' +
+          samples.length +
+          ' samples. Matched: ' +
+          matched +
+          ', unmatched outputs: ' +
+          unmatchedOutputs +
+          '.';
+
+        annotationSection.classList.remove('hidden');
+        summarySection.classList.remove('hidden');
+
+        updateProgress();
+        refreshSummaryTable();
+        showSample(0);
+      }
+
+      function showSample(index) {
+        if (!samples.length) return;
+        if (index < 0 || index >= samples.length) return;
+
+        currentIndex = index;
+        const sample = samples[index];
+
+        originalJD.textContent = sample.jobDescription || '';
+        summaryField.textContent = sample.summary || '';
+        fixedJD.textContent = sample.fixedDescription || '';
+
+        idField.textContent = sample.id ? 'ID: ' + sample.id : 'ID: (none)';
+
+        sampleIndexBadge.textContent =
+          'Sample ' + (index + 1) + ' / ' + samples.length;
+
+        const annotation = annotations[index];
+        if (annotation) {
+          const decision = annotation.decision === 'fail' ? 'FAIL' : 'PASS';
+          sampleStatusBadge.textContent = 'Annotated: ' + decision;
+          if (annotation.decision === 'fail') {
+            sampleStatusBadge.className =
+              'inline-flex items-center justify-center px-2.5 py-0.5 rounded-full bg-rose-50 text-rose-700 text-xs font-medium';
+            failReasonContainer.classList.remove('hidden');
+            failReason.value = annotation.reason || '';
+          } else {
+            sampleStatusBadge.className =
+              'inline-flex items-center justify-center px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-xs font-medium';
+            failReasonContainer.classList.add('hidden');
+            failReason.value = '';
+          }
+          annotationInfo.textContent =
+            'Last decision: ' +
+            decision +
+            (annotation.reason ? ' — ' + annotation.reason : '');
+        } else {
+          sampleStatusBadge.textContent = 'Not annotated';
+          sampleStatusBadge.className =
+            'inline-flex items-center justify-center px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-500 text-xs';
+          failReasonContainer.classList.add('hidden');
+          failReason.value = '';
+          annotationInfo.textContent = 'Not annotated yet.';
+        }
+
+        prevBtn.disabled = index === 0;
+        nextBtn.disabled = index === samples.length - 1;
+      }
+
+      function updateProgress() {
+        const total = samples.length;
+        const completed = annotations.filter(Boolean).length;
+        const remaining = total - completed;
+
+        progressText.textContent = completed + ' / ' + total + ' annotated';
+        remainingText.textContent = 'Remaining: ' + remaining;
+
+        const pct = total ? (completed / total) * 100 : 0;
+        progressBar.style.width = pct.toFixed(1) + '%';
+      }
+
+      function refreshSummaryTable() {
+        summaryTableBody.innerHTML = '';
+        samples.forEach((sample, index) => {
+          const tr = document.createElement('tr');
+          tr.className = 'hover:bg-slate-100 cursor-pointer';
+
+          const ann = annotations[index];
+          const status = ann ? ann.decision.toUpperCase() : '';
+
+          if (ann) {
+            tr.classList.add(
+              ann.decision === 'fail' ? 'bg-rose-50/40' : 'bg-emerald-50/40'
+            );
+          }
+
+          const reasonText = ann && ann.reason ? ann.reason : '';
+          const safeTitle = reasonText.replace(/"/g, '&quot;');
+
+          tr.innerHTML = `
+            <td class="px-3 py-2 align-top">${index + 1}</td>
+            <td class="px-3 py-2 align-top">${sample.id ? String(sample.id) : ''}</td>
+            <td class="px-3 py-2 align-top">${status}</td>
+            <td class="px-3 py-2 align-top max-w-xs truncate" title="${safeTitle}">${reasonText}</td>
+          `;
+
+          tr.addEventListener('click', () => {
+            showSample(index);
+          });
+
+          summaryTableBody.appendChild(tr);
+        });
+      }
+
+      function goToNextUnannotated() {
+        if (!samples.length) return;
+
+        let next = -1;
+        for (let i = currentIndex + 1; i < samples.length; i++) {
+          if (!annotations[i]) {
+            next = i;
+            break;
+          }
+        }
+        if (next === -1) {
+          for (let i = 0; i < currentIndex; i++) {
+            if (!annotations[i]) {
+              next = i;
+              break;
+            }
+          }
+        }
+
+        if (next === -1) {
+          alert('All samples are annotated.');
+          return;
+        }
+
+        showSample(next);
+      }
+
+      function saveAnnotation(decision) {
+        if (!samples.length) return;
+
+        if (decision === 'fail') {
+          if (failReasonContainer.classList.contains('hidden')) {
+            failReasonContainer.classList.remove('hidden');
+            failReason.focus();
+            return;
+          }
+          const reasonText = failReason.value.trim();
+          if (!reasonText) {
+            alert('Please provide a reason for the failure.');
+            failReason.focus();
+            return;
+          }
+          annotations[currentIndex] = {
+            decision: 'fail',
+            reason: reasonText,
+          };
+        } else {
+          annotations[currentIndex] = {
+            decision: 'pass',
+            reason: '',
+          };
+          failReason.value = '';
+          failReasonContainer.classList.add('hidden');
+        }
+
+        // Ensure current sample UI reflects the latest decision
+        showSample(currentIndex);
+
+        updateProgress();
+        refreshSummaryTable();
+
+        // Then move to next unannotated sample
+        goToNextUnannotated();
+      }
+
+      function setupSpeechRecognition() {
+        const SpeechRecognition =
+          window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechRecognition) {
+          micStatus.textContent =
+            'Speech recognition not supported in this browser.';
+          micStatus.classList.add('text-rose-500');
+          micToggleBtn.disabled = true;
+          micToggleBtn.classList.add('opacity-50', 'cursor-not-allowed');
+          return null;
+        }
+
+        const rec = new SpeechRecognition();
+        rec.lang = 'en-US';
+        rec.interimResults = false;
+        rec.continuous = false;
+
+        rec.onstart = function () {
+          isRecording = true;
+          micStatus.textContent = 'Listening...';
+          micStatus.classList.remove('text-rose-500');
+          micLabel.textContent = 'Stop';
+        };
+
+        rec.onend = function () {
+          isRecording = false;
+          micStatus.textContent = 'Mic off';
+          micLabel.textContent = 'Voice input';
+        };
+
+        rec.onerror = function (event) {
+          isRecording = false;
+          micStatus.textContent = 'Error: ' + event.error;
+          micStatus.classList.add('text-rose-500');
+          micLabel.textContent = 'Voice input';
+        };
+
+        rec.onresult = function (event) {
+          const transcript = Array.from(event.results)
+            .map((r) => r[0].transcript)
+            .join(' ');
+          if (transcript) {
+            if (failReason.value) {
+              failReason.value += ' ' + transcript;
+            } else {
+              failReason.value = transcript;
+            }
+          }
+        };
+
+        return rec;
+      }
+
+      // Event listeners
+
+      inputFile.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        parseCsvFile(file, (data) => {
+          inputData = data;
+          loadStatus.classList.remove('text-rose-600');
+          loadStatus.textContent =
+            'Input CSV loaded (' + data.length + ' rows). Waiting for output CSV...';
+          tryBuildSamples();
+        });
+      });
+
+      outputFile.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        parseCsvFile(file, (data) => {
+          outputData = data;
+          loadStatus.classList.remove('text-rose-600');
+          loadStatus.textContent =
+            'Output CSV loaded (' + data.length + ' rows).';
+          tryBuildSamples();
+        });
+      });
+
+      prevBtn.addEventListener('click', () => {
+        if (currentIndex > 0) {
+          showSample(currentIndex - 1);
+        }
+      });
+
+      nextBtn.addEventListener('click', () => {
+        if (currentIndex < samples.length - 1) {
+          showSample(currentIndex + 1);
+        }
+      });
+
+      nextUnannotatedBtn.addEventListener('click', () => {
+        goToNextUnannotated();
+      });
+
+      passBtn.addEventListener('click', () => {
+        saveAnnotation('pass');
+      });
+
+      failBtn.addEventListener('click', () => {
+        // First reveal the reason box if hidden, then require a reason on second click
+        if (failReasonContainer.classList.contains('hidden')) {
+          failReasonContainer.classList.remove('hidden');
+          failReason.focus();
+          return;
+        }
+        saveAnnotation('fail');
+      });
+
+      micToggleBtn.addEventListener('click', () => {
+        if (!recognition) {
+          recognition = setupSpeechRecognition();
+          if (!recognition) return;
+        }
+
+        if (failReasonContainer.classList.contains('hidden')) {
+          failReasonContainer.classList.remove('hidden');
+        }
+
+        try {
+          if (!isRecording) {
+            recognition.start();
+          } else {
+            recognition.stop();
+          }
+        } catch (e) {
+          // Some browsers may throw if start() is called too quickly
+        }
+      });
+
+      downloadBtn.addEventListener('click', () => {
+        if (!samples.length) {
+          alert('No samples to export.');
+          return;
+        }
+
+        const rows = samples.map((sample, index) => {
+          const ann = annotations[index];
+          return {
+            Index: index + 1,
+            ID: sample.id || '',
+            'Job Description': sample.jobDescription || '',
+            Summary: sample.summary || '',
+            'Fixed Description': sample.fixedDescription || '',
+            Decision: ann ? ann.decision.toUpperCase() : '',
+            Reason: ann ? ann.reason || '' : '',
+          };
+        });
+
+        const csv = Papa.unparse(rows);
+
+        if (window.navigator && window.navigator.msSaveOrOpenBlob) {
+          const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+          window.navigator.msSaveOrOpenBlob(blob, 'jd_annotations.csv');
+          return;
+        }
+
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', 'jd_annotations.csv');
+
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+      });
+    </script>
+  </body>
+</html>

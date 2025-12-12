@@ -1,0 +1,37 @@
+meta {
+  name: 1. Initialize Session
+  type: http
+  seq: 1
+}
+
+post {
+  url: http://localhost:9000/mcp
+  body: json
+  auth: none
+}
+
+headers {
+  Accept: application/json, text/event-stream
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "jsonrpc": "2.0",
+    "id": "init-001",
+    "method": "initialize",
+    "params": {
+      "protocolVersion": "2024-11-05",
+      "capabilities": {
+        "roots": {
+          "listChanged": false
+        },
+        "sampling": {}
+      },
+      "clientInfo": {
+        "name": "mcp-client",
+        "version": "1.0.0"
+      }
+    }
+  }
+}

@@ -1,0 +1,26 @@
+meta {
+  name: 3. List Tools GitHub
+  type: http
+  seq: 8
+}
+
+post {
+  url: https://api.githubcopilot.com/mcp
+  body: json
+  auth: none
+}
+
+headers {
+  Accept: application/json, text/event-stream
+  Content-Type: application/json
+  mcp-session-id: fa27b63e-5da4-4d0e-88f6-7bdb227e8a41
+  Authorization: Bearer github_pat_XXXXX
+}
+
+body:json {
+  {
+    "jsonrpc": "2.0",
+    "id": "list-001",
+    "method": "tools/list"
+  }
+}

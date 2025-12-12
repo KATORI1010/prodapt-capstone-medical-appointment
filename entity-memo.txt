@@ -1,0 +1,60 @@
+<Entity & Attribute>
+- User
+    - id
+    - first name
+    - last name
+    - role
+    - department
+    - status
+    - email
+    - password
+- Role
+    - id
+    - name
+    - description
+- Department
+    - id
+    - name
+    - representative
+    - upper department
+    - description
+- Job Opening
+    - id
+    - title
+    - description
+    - required skills
+    - start date
+    - end date
+    - status
+- Application
+    - id
+    - applicant
+    - job opening
+    - application date
+    - status
+- Applicant
+    - id
+    - first name
+    - last name
+    - age
+    - email
+    - password
+    - holding skills
+- Skill
+    - id
+    - name
+    - category
+    - importance level
+    - description
+- 
+
+<Relationship>
+- User <-> Role (many to many)
+- Department <-> User (one to many)
+- Job Opening <-> Skill (many to many)
+- Applicant <-> Skill (many to many)
+
+
+
+
+

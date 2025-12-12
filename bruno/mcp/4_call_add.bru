@@ -1,0 +1,32 @@
+meta {
+  name: 4. Call Add Tool
+  type: http
+  seq: 5
+}
+
+post {
+  url: http://localhost:9000/mcp
+  body: json
+  auth: none
+}
+
+headers {
+  Accept: application/json, text/event-stream
+  Content-Type: application/json
+  mcp-session-id: 1626abc368104bd0b2d70b30990a39aa
+}
+
+body:json {
+  {
+    "jsonrpc": "2.0",
+    "id": "add-001",
+    "method": "tools/call",
+    "params": {
+      "name": "add",
+      "arguments": {
+        "a": 5,
+        "b": 3
+      }
+    }
+  }
+}

@@ -1,0 +1,25 @@
+meta {
+  name: Update Job Board
+  type: http
+  seq: 4
+}
+
+put {
+  url: {{BASE_URL}}/api/job-boards/:id
+  body: multipartForm
+  auth: inherit
+}
+
+params:path {
+  id: 15
+}
+
+body:multipart-form {
+  slug: Meta999
+  ~logo: @file(C:\Users\hiroaki.katori\python-fastapi-render\sample_data\Meta-Logo.png)
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

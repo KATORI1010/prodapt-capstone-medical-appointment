@@ -1,0 +1,9 @@
+{
+  "version": "1",
+  "name": "MCP Client",
+  "type": "collection",
+  "ignore": [
+    "node_modules",
+    ".git"
+  ]
+}

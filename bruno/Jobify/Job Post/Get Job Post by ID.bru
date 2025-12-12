@@ -1,0 +1,20 @@
+meta {
+  name: Get Job Post by ID
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{BASE_URL}}/api/job-posts/:id
+  body: none
+  auth: inherit
+}
+
+params:path {
+  id: 1
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

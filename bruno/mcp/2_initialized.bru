@@ -1,0 +1,24 @@
+meta {
+  name: 2. Send Initialized Notification
+  type: http
+  seq: 3
+}
+
+post {
+  url: http://localhost:9000/mcp
+  body: json
+  auth: none
+}
+
+headers {
+  Accept: application/json, text/event-stream
+  Content-Type: application/json
+  mcp-session-id: 1626abc368104bd0b2d70b30990a39aa
+}
+
+body:json {
+  {
+    "jsonrpc": "2.0",
+    "method": "notifications/initialized"
+  }
+}

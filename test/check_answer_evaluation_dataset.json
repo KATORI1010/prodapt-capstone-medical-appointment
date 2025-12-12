@@ -1,0 +1,182 @@
+[
+  {
+    "skill": "System Design",
+    "question": "How many replicas would you normally set up for a small but high-uptime API service?",
+    "answer": "probly like 1 or maybe 2 idk",
+    "correct": false
+  },
+  {
+    "skill": "SQL",
+    "question": "Can you explain how you would troubleshoot a query that suddenly started running slower this week?",
+    "answer": "I\u2019d start by checking the execution plan and seeing if anything suddenly shifted, like an index not being used anymore. Then I\u2019d compare query stats over time to see if data growth changed the plan. After that I'd look at locking or blocking issues just to be safe.",
+    "correct": true
+  },
+  {
+    "skill": "Python",
+    "question": "Which built-in Python module would you use to create a secure hash for password storage?",
+    "answer": "uhh base64 i think",
+    "correct": false
+  },
+  {
+    "skill": "Python",
+    "question": "How would you briefly describe what a Python list comprehension is used for?",
+    "answer": "It\u2019s basically a cleaner way to build lists without writing full loops. You can express filtering and transformation pretty quickly. It just keeps code compact and readable.",
+    "correct": true
+  },
+  {
+    "skill": "SQL",
+    "question": "What does the SQL keyword DISTINCT do in a SELECT query?",
+    "answer": "It does something with sorting and like grouping all the rows together so they all become unique somehow even if they arent and maybe also filters empty rows which depends on the table, not fully sure tho",
+    "correct": false
+  },
+  {
+    "skill": "Python",
+    "question": "How would you explain what a Python dictionary is to a new developer?",
+    "answer": "It\u2019s a key-value data structure that lets you quickly retrieve values by their keys. It behaves like a simple in-memory map.",
+    "correct": true
+  },
+  {
+    "skill": "SQL",
+    "question": "Which SQL clause allows you to filter aggregated results after a GROUP BY?",
+    "answer": "The HAVING clause.",
+    "correct": true
+  },
+  {
+    "skill": "System Design",
+    "question": "When designing a distributed cache for high-traffic reads, what consistency model would you typically choose?",
+    "answer": "You usually want something like full global perfect consistency everywhere instantly so the cache never has old data and all nodes always agree at the exact same time no matter the latency which is possible if you just sync harder or something like that I guess",
+    "correct": false
+  },
+  {
+    "skill": "SQL",
+    "question": "How would you describe when to use an index on a column?",
+    "answer": "You add an index when a column is frequently filtered, joined, or sorted on and you need faster lookups.",
+    "correct": true
+  },
+  {
+    "skill": "System Design",
+    "question": "If you were asked to design a payment service that must never lose transactions, how would you approach the reliability requirements?",
+    "answer": "I\u2019d rely on durable writes and replicated logs to ensure data integrity even during node failures. Then I'd add retry logic with idempotent operations so the system never double-charges. Together these help maintain correctness under real-world faults.",
+    "correct": true
+  },
+  {
+    "skill": "SQL",
+    "question": "How would you explain the purpose of a window function to someone unfamiliar with them?",
+    "answer": "A window function performs calculations across related rows without collapsing them the way GROUP BY does.",
+    "correct": true
+  },
+  {
+    "skill": "System Design",
+    "question": "In a message queue system, why might you choose at-least-once delivery over at-most-once delivery?",
+    "answer": "Because it prioritizes reliability by ensuring messages are not lost even if they may occasionally be processed more than once.",
+    "correct": true
+  },
+  {
+    "skill": "Python",
+    "question": "How would you describe what a Python function does?",
+    "answer": "it kinda runs code stuff and returns things maybe not always",
+    "correct": false
+  },
+  {
+    "skill": "Python",
+    "question": "Can you explain why generators are useful in large data processing?",
+    "answer": "they like save space or somethin",
+    "correct": false
+  },
+  {
+    "skill": "Python",
+    "question": "How would you briefly explain Python\u2019s GIL to a candidate?",
+    "answer": "The GIL is a lock that allows only one thread to execute Python bytecode at a time, limiting CPU-bound parallelism.",
+    "correct": true
+  },
+  {
+    "skill": "SQL",
+    "question": "What does a clustered index determine in a relational database?",
+    "answer": "It basically decides every single physical aspect of the database and organizes all tables in some super rigid way that can't really be changed and also affects every query in ways that make them all slow if its wrong which is why people avoid using it I think",
+    "correct": false
+  },
+  {
+    "skill": "System Design",
+    "question": "How would you handle sudden traffic spikes for a service with unpredictable load patterns?",
+    "answer": "I\u2019d rely on autoscaling policies that can quickly add instances under heavy load. Then I'd add buffering with queues so bursts don\u2019t overwhelm downstream systems. Finally I'd monitor saturation levels to ensure scaling happens early enough.",
+    "correct": true
+  },
+  {
+    "skill": "SQL",
+    "question": "What does an INNER JOIN return?",
+    "answer": "It returns like all the rows from both tables even when they dont match probably and maybe some nulls if the data is missing which depends on the database setup kinda",
+    "correct": false
+  },
+  {
+    "skill": "Python",
+    "question": "What keyword is used to define a class in Python?",
+    "answer": "func i guess",
+    "correct": false
+  },
+  {
+    "skill": "System Design",
+    "question": "What is the main purpose of a load balancer?",
+    "answer": "to kinda make servers not break maybe",
+    "correct": false
+  },
+  {
+    "skill": "System Design",
+    "question": "How would you describe what horizontal scaling means?",
+    "answer": "It means adding more machines to handle increased load instead of making a single machine more powerful.",
+    "correct": true
+  },
+  {
+    "skill": "SQL",
+    "question": "What does the COUNT(*) function do?",
+    "answer": "It returns the total number of rows in the result set.",
+    "correct": true
+  },
+  {
+    "skill": "SQL",
+    "question": "How would you explain a primary key to a non-technical person?",
+    "answer": "its jus the main id thing for rows pretty much",
+    "correct": false
+  },
+  {
+    "skill": "SQL",
+    "question": "How would you explain what a foreign key does?",
+    "answer": "It enforces a relationship between tables by ensuring referenced values exist.",
+    "correct": true
+  },
+  {
+    "skill": "System Design",
+    "question": "Why might an eventually consistent database be acceptable for a social feed?",
+    "answer": "Because users don\u2019t need every tiny update instantly and can tolerate brief delays. The trade-off improves scalability and availability. Many high-traffic systems rely on this balance to stay responsive.",
+    "correct": true
+  },
+  {
+    "skill": "System Design",
+    "question": "Can you explain what caching does for a system?",
+    "answer": "it stores stuff so its faster or something",
+    "correct": false
+  },
+  {
+    "skill": "System Design",
+    "question": "What is the purpose of an API gateway?",
+    "answer": "It centralizes routing, authentication, and request handling for backend services.",
+    "correct": true
+  },
+  {
+    "skill": "SQL",
+    "question": "Which SQL command is used to update existing rows in a table?",
+    "answer": "The UPDATE command.",
+    "correct": true
+  },
+  {
+    "skill": "SQL",
+    "question": "How would you explain the difference between a materialized view and a normal view?",
+    "answer": "A normal view is just a stored query that runs on demand, while a materialized view stores its results physically. This makes materialized views faster for repeated reads. But they require refreshes and add storage overhead.",
+    "correct": true
+  },
+  {
+    "skill": "System Design",
+    "question": "Why might you use a CDN for serving static assets?",
+    "answer": "A CDN reduces latency by caching assets close to users, which improves responsiveness. It also offloads traffic from your origin servers. Overall it just helps systems run smoother under load.",
+    "correct": true
+  }
+]

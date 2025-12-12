@@ -1,0 +1,26 @@
+meta {
+  name: Suggest Chennai Weekend
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{BASE_URL}}/suggestion/chennai-weekend
+  body: multipartForm
+  auth: inherit
+}
+
+body:multipart-form {
+  target_date: 2025-11-29
+  user_profile: '''
+    I am a photography enthusiast visiting Chennai for a weekend.
+    I enjoy beaches, cultural spots, nature, and scenic areas.
+    I prefer mornings for outdoor activities and evenings for food and cafés.
+    My budget is flexible, and I travel solo.
+  '''
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

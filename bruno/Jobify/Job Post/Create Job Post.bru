@@ -1,0 +1,22 @@
+meta {
+  name: Create Job Post
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{BASE_URL}}/api/job-posts
+  body: multipartForm
+  auth: inherit
+}
+
+body:multipart-form {
+  title: QA Engineer (Test Automation / Quality Assurance)
+  description: We are hiring a QA engineer to help improve the quality of our services. You will be responsible for test planning, designing test cases, and implementing automated tests—including E2E and API automation. Working closely with the development team, you will ensure product stability and reliability before each release. Our testing environment leverages tools such as Playwright and pytest, and you will contribute to building and maintaining our automation framework. This position is ideal for individuals who pay close attention to detail and value strong team communication.
+  job_board_id: 1
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
