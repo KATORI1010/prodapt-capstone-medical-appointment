@@ -1,16 +1,14 @@
 <Entity & Attribute>
-- User
+- Appointment
     - id
+    - status
     - first name
     - last name
-    - role
-    - department
-    - status
     - email
-    - password
-- Role
+    - date
+- Medical Interview
     - id
-    - name
+    - consultation topic
     - description
 - Department
     - id
@@ -46,13 +44,7 @@
     - category
     - importance level
     - description
-- 
 
-<Relationship>
-- User <-> Role (many to many)
-- Department <-> User (one to many)
-- Job Opening <-> Skill (many to many)
-- Applicant <-> Skill (many to many)
 
 
 

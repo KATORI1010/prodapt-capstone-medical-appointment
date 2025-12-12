@@ -10,6 +10,7 @@ testcontainers==4.13.3 # PyTest Dependencies
 pytest==9.0.1 # Testing Tool
 httpx==0.28.1 # HTTP Client
 openai==2.8.1 # LLM
+openai-chatkit
 PyPDF2==3.0.1 # PDF to Text
 langchain==1.1.0 # Langchain framework
 langchain-openai==1.1.0 # Langchain Open AI interface

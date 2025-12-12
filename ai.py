@@ -2,7 +2,7 @@ import os
 from typing import List, Literal
 from dotenv import load_dotenv
 import json
-import truststore  # SSL証明書エラーの対応のため
+# import truststore  # SSL証明書エラーの対応のため
 
 from pydantic import BaseModel
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
@@ -19,7 +19,7 @@ from braintrust_langchain import BraintrustCallbackHandler, set_global_handler
 from config import settings
 
 load_dotenv()
-truststore.inject_into_ssl()
+# truststore.inject_into_ssl()
 
 # Tracing to Braintrust
 init_logger(project="Prodapt", api_key=os.environ.get("BRAINTRUST_API_KEY"))
@@ -217,66 +217,6 @@ def review_application(job_description: str) -> ReviewedApplication:
     )
 
 
-def get_vector_store() -> QdrantVectorStore:
-    if settings.PRODUCTION:
-        embeddings = OpenAIEmbeddings(
-            model="text-embedding-3-large", api_key=settings.OPENAI_API_KEY
-        )
-        vector_store = QdrantVectorStore.from_existing_collection(
-            url=str(settings.QDRANT_URL),
-            api_key=settings.QDRANT_API_KEY,
-            embedding=embeddings,
-            collection_name="resumes",
-        )
-        return vector_store
-    else:
-        embeddings = OpenAIEmbeddings(
-            model="text-embedding-3-large", api_key=settings.OPENAI_API_KEY
-        )
-        vector_store = QdrantVectorStore.from_existing_collection(
-            embedding=embeddings, collection_name="resumes", path="qdrant_store"
-        )
-        return vector_store
-
-
-def inmemory_vector_store():
-    embeddings = OpenAIEmbeddings(
-        model="text-embedding-3-large", api_key=settings.OPENAI_API_KEY
-    )
-
-    client = QdrantClient(":memory:")
-    client.create_collection(
-        collection_name="resumes",
-        vectors_config=VectorParams(size=3072, distance=Distance.COSINE),
-    )
-    vector_store = QdrantVectorStore(
-        client=client, collection_name="resumes", embedding=embeddings
-    )
-    try:
-        yield vector_store
-    finally:
-        client.close()
-
-
-def ingest_resume(
-    resume_content: str, filename: str, resume_id: int, vector_store: QdrantVectorStore
-):
-    document = Document(
-        page_content=resume_content,
-        metadata={
-            "url": filename,
-        },
-    )
-    vector_store.add_documents(
-        [document],
-        ids=[resume_id],
-    )
-
-
-def get_recommendatation(job_description: str, vector_store: QdrantVectorStore):
-    retriever = vector_store.as_retriever(search_kwargs={"k": 1})
-    result = retriever.invoke(job_description)
-    return result[0]
 
 
 test_job_description = """
