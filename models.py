@@ -1,5 +1,7 @@
-from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey
-from sqlalchemy.orm import declarative_base, relationship
+import enum
+
+from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey, Enum
+from sqlalchemy.orm import declarative_base, relationship, Mapped, mapped_column
 from sqlalchemy.dialects.postgresql import JSONB
 
 Base = declarative_base()
@@ -10,13 +12,37 @@ Base = declarative_base()
 # alembic downgrade -1
 
 
+class Genter(str, enum.Enum):
+    MALE = "male"
+    FEMALE = "female"
+
+
+class Patient(Base):
+    __tablename__ = "patients"
+    id = Column(Integer, primary_key=True)
+    first_name = Column(String, nullable=True)
+    last_name = Column(String, nullable=True)
+    age = Column(Integer, nullable=True)
+    gender: Mapped[Genter] = mapped_column(
+        Enum(
+            Genter,
+            name="gender",
+            native_enum=True,
+            validate_strings=True,
+        )
+    )
+    appointments = relationship(
+        "Appointment", back_populates="patient", cascade="all, delete-orphan"
+    )
+
+
 class Appointment(Base):
     __tablename__ = "appointments"
     id = Column(Integer, primary_key=True)
     status = Column(String, nullable=False)
-    first_name = Column(String, nullable=True)
-    last_name = Column(String, nullable=True)
+    patient_id = Column(Integer, ForeignKey("patients.id"), nullable=False)
     date = Column(DateTime, nullable=True)
+    patient = relationship("Patient", back_populates="appointments")
     medical_interviews = relationship(
         "MedicalInterview", back_populates="appointment", cascade="all, delete-orphan"
     )

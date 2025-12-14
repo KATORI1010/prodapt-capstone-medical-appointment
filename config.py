@@ -13,7 +13,7 @@ class Settings(BaseSettings):
     WORKFLOW_ID: str
     # QDRANT_URL: AnyUrl
     # QDRANT_API_KEY: str
-    # BRAINTRUST_API_KEY: str
+    BRAINTRUST_API_KEY: str
 
     class Config:
         env_file = ".env"

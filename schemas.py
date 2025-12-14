@@ -1,4 +1,17 @@
+from datetime import datetime
+
 from pydantic import BaseModel, Field, ConfigDict
+
+
+class ReadAppointmentSchema(BaseModel):
+    id: int
+    status: str
+    first_name: str
+    last_name: str
+    age: int
+    gender: str
+    date: datetime
+
 
 class CreateMedicalInterview(BaseModel):
     appointment_id: int = Field(...)
@@ -21,5 +34,5 @@ class UpdateMedicalInterview(BaseModel):
     severity: str | None = None
     current_medications: str | None = None
     allergies: str | None = None
-    
+
     model_config = ConfigDict(extra="forbid")

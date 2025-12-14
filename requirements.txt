@@ -21,3 +21,4 @@ openai-agents==0.6.2
 braintrust[openai-agents]==0.3.12 # Braintrust
 braintrust-langchain==0.1.5
 fastmcp
+truststore # SSL証明書エラー対応のため

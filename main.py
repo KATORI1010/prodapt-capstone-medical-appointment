@@ -27,7 +27,7 @@ from openai import OpenAI
 
 from db import get_db_session, get_db, Session
 from models import Appointment, MedicalInterview
-from schemas import CreateMedicalInterview
+from schemas import ReadAppointmentSchema, CreateMedicalInterview
 from auth import (
     authenticate_admin,
     is_admin,
@@ -83,8 +83,7 @@ async def chatkit(request: Request, db: Session = Depends(get_db)):
 
 class AppointmentForm(BaseModel):
     status: str = Field(...)
-    first_name: str = Field(...)
-    last_name: str = Field(...)
+    patient_id: int = Field(...)
     date: datetime = Field(...)
 
 
@@ -95,8 +94,7 @@ async def api_create_appointment(
 ):
     db_appointment = Appointment(
         status=appointment_form.status,
-        first_name=appointment_form.first_name,
-        last_name=appointment_form.last_name,
+        patient_id=appointment_form.patient_id,
         date=appointment_form.date,
     )
     db.add(db_appointment)
@@ -106,10 +104,33 @@ async def api_create_appointment(
 
 
 # Read Appointments
-@app.get("/api/appointments")
+# @app.get("/api/appointments")
+# async def api_read_appointments(db: Session = Depends(get_db)):
+#     db_appointments = db.query(Appointment).order_by(desc(Appointment.date)).all()
+#     return db_appointments
+
+
+@app.get("/api/appointments", response_model=list[ReadAppointmentSchema])
 async def api_read_appointments(db: Session = Depends(get_db)):
-    db_appointments = db.query(Appointment).order_by(desc(Appointment.date)).all()
-    return db_appointments
+    db_appointments = (
+        db.query(Appointment)
+        .join(Appointment.patient)
+        .order_by(desc(Appointment.date))
+        .all()
+    )
+
+    return [
+        ReadAppointmentSchema(
+            id=appointment.id,
+            status=appointment.status,
+            first_name=appointment.patient.first_name,
+            last_name=appointment.patient.last_name,
+            age=appointment.patient.age,
+            gender=appointment.patient.gender,
+            date=appointment.date,
+        )
+        for appointment in db_appointments
+    ]
 
 
 # Create Medical Interviews

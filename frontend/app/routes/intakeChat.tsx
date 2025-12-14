@@ -5,11 +5,12 @@ import type { UseChatKitOptions } from "@openai/chatkit-react";
 
 type IntakeChatProps = {
     interviewId: string;
+    initialMessage?: string;
     responseEndHandler: () => void;
 }
 
 
-export function IntakeChat({ interviewId, responseEndHandler }: IntakeChatProps) {
+export function IntakeChat({ interviewId, initialMessage, responseEndHandler }: IntakeChatProps) {
     const options: UseChatKitOptions = {
         api: {
             url: "/chatkit",
@@ -34,10 +35,20 @@ export function IntakeChat({ interviewId, responseEndHandler }: IntakeChatProps)
             //     return client_secret;
             // },
         },
+        onReady: () => {
+            // 1通目のユーザーメッセージを自動化
+            if (initialMessage) {
+                sendUserMessage({
+                    text: initialMessage,
+                    newThread: true,
+                });
+            }
+        },
+        // チャットのレスポンス終了時に画面のデータ更新を行う
         onResponseEnd: responseEndHandler,
         theme: {
             colorScheme: 'light',
-            radius: 'round',
+            radius: 'pill',
             density: 'normal',
             color: {
                 grayscale: {
@@ -67,8 +78,8 @@ export function IntakeChat({ interviewId, responseEndHandler }: IntakeChatProps)
             }
         },
         composer: {
-            placeholder: 'Placeholder',
-            attachments: {
+            placeholder: 'Please respond to the medical question.',
+            attachments: {  // ファイルの添付機能を無効化
                 enabled: false
             },
         },
@@ -88,8 +99,16 @@ export function IntakeChat({ interviewId, responseEndHandler }: IntakeChatProps)
                 // ...and 4 more prompts
             ],
         },
+        threadItemActions: {  // フィードバック機能を無効化
+            feedback: false,
+        },
     };
 
-    const { control } = useChatKit(options);
-    return <ChatKit control={control} className="h-[80vh] w-full" />;
+    const {
+        control,
+        setComposerValue,
+        sendUserMessage,
+        setThreadId,
+    } = useChatKit(options);
+    return <ChatKit control={control} className="h-full w-full" />;
 }
