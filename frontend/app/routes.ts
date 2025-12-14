@@ -4,7 +4,7 @@ export default [
     layout("layouts/default.tsx", [
         route("/", "routes/home.tsx"),
         route("/appointment/:appointmentId/medical-initial-form", "routes/medical_initial_form.tsx"),
-        route("/appointment/:appointmentId/medical-interview", "routes/medical_interview.tsx"),
+        route("/appointment/:appointmentId/medical-interview/:interviewId", "routes/medical_interview.tsx"),
         // route("job-boards/new", "routes/new_job_board.tsx"),
         // route("job-boards/:jobBoardId/edit", "routes/edit_job_board.tsx"),
         // route("job-boards/:jobBoardId/job-posts", "routes/job_posts.tsx"),

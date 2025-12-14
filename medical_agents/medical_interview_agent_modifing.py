@@ -1,0 +1,276 @@
+from dataclasses import dataclass
+from pathlib import Path
+
+from sqlalchemy import desc
+from openai.types.shared import Reasoning
+from agents import Agent, ModelSettings, function_tool, RunContextWrapper
+from chatkit.agents import AgentContext
+
+from db import Session
+from models import MedicalInterview
+from schemas import UpdateMedicalInterview
+
+
+def load_prompt_md(relative_path: str) -> str:
+    base_dir = Path(__file__).resolve().parent
+    prompt_path = base_dir / relative_path
+    return Path(prompt_path).read_text(encoding="utf-8-sig")
+
+
+ORCHESTRATE_PROMPT = load_prompt_md("./prompts/orchestrate_interview_prompt.md")
+
+
+chief_complaint_agent = Agent(
+    name="Chief Complaint Agent",
+    instructions="""
+    あなたは医療機関の問診チャットにおける「受診の理由（主訴）」の質問文を作る専門エージェントです。
+    目的：患者が“いちばん困っていること/心配していること”を短い言葉で引き出す。
+
+    制約：
+    - 質問は1つだけ。
+    - 医療判断・診断・治療の断定はしない。
+    - 丁寧で安心感のある日本語。詰問口調にしない。
+
+    出力：
+    - 質問文のみ。
+    """,
+    model="gpt-5-mini",
+    model_settings=ModelSettings(reasoning=Reasoning(effort="low"), verbosity="low"),
+)
+
+symptom_agent = Agent(
+    name="Symptom Agent",
+    instructions="""
+    あなたは「症状の具体化（部位・性質・随伴症状）」の質問文を作る専門エージェントです。
+    目的：症状の場所、どんな感じか、他に一緒に出ている症状を短く聞き出す。
+
+    制約：
+    - 質問は1つだけ。(ただし1問の中で “選択肢/例示” を軽く添えてよい）
+    - ユーザーが答えやすいように、例：痛みなら「ズキズキ/締め付け/チクチク」などの表現を添える。
+    - 診断や原因の断定はしない。
+
+    出力：
+    - 質問文のみ。
+    """,
+    model="gpt-5-mini",
+    model_settings=ModelSettings(reasoning=Reasoning(effort="low"), verbosity="low"),
+)
+
+duration_agent = Agent(
+    name="Duration Agent",
+    instructions="""
+    あなたは「いつから・どれくらい続く・頻度」の質問文を作る専門エージェントです。
+    目的：発症時期（いつから）、持続（ずっと/断続的）、頻度（毎日/1日数回/時々）を把握する。
+
+    制約：
+    - 質問は1つだけ。
+    - ユーザーが選びやすいように、時間の例を短く提示してよい（例：今日/昨日/数日/1週間以上）。
+    - 診断はしない。誘導しない。
+
+    出力：
+    - 質問文のみ。
+    """,
+    model="gpt-5-mini",
+    model_settings=ModelSettings(reasoning=Reasoning(effort="low"), verbosity="low"),
+)
+
+severity_agent = Agent(
+    name="Severity Agent",
+    instructions="""
+    あなたは「重症度（つらさ/痛みの強さ/生活への影響）」の質問文を作る専門エージェントです。
+    目的：症状の強さを数値や言葉で把握し、緊急性の判断材料をそろえる（判断自体はしない）。
+
+    制約：
+    - 質問は1つだけ。
+    - 可能なら0〜10の数値尺度で聞く（0=まったくつらくない、10=これ以上ないつらさ/人生で最悪）を短く添える。
+    - 併せて「日常生活への影響」がわかる言い回しを入れてよい（例：眠れない、歩けない、仕事ができない）。
+
+    出力：
+    - 質問文のみ。
+    """,
+    model="gpt-5-mini",
+    model_settings=ModelSettings(reasoning=Reasoning(effort="low"), verbosity="low"),
+)
+
+medication_agent = Agent(
+    name="Medication Agent",
+    instructions="""
+    あなたは「服用中の薬（処方薬・市販薬・サプリ含む）」の質問文を作る専門エージェントです。
+    目的：飲み合わせ・重複などの安全確認のため、現在の服薬状況を漏れにくく収集する。
+
+    制約：
+    - 質問は1つだけ。
+    - 「お薬手帳/薬の名前が分かるものがあれば見ながら」など、思い出しやすい導線を短く添える。
+    - 処方薬だけでなく、市販薬・サプリ・漢方も含めることを明示してよい。
+    - 診断・処方提案はしない。
+
+    出力：
+    - 質問文のみ。
+    """,
+    model="gpt-5-mini",
+    model_settings=ModelSettings(reasoning=Reasoning(effort="low"), verbosity="low"),
+)
+
+allergies_agent = Agent(
+    name="Allergies Agent",
+    instructions="""
+    あなたは「アレルギー（薬・食物・その他）」の質問文を作る専門エージェントです。
+    目的：医療安全のため、アレルギーの有無と内容（何で、どんな症状が出たか）を把握する。
+
+    制約：
+    - 質問は1つだけ。
+    - 「薬・食べ物」だけでなく、医療で問題になりやすいもの（例：造影剤、ラテックス/ゴム、消毒薬など）にも触れてよい。
+    - 「どんな症状（発疹、かゆみ、息苦しさ等）」を一言で確認できるようにする。
+    - 断定せず、丁寧な聞き方にする。
+
+    出力：
+    - 質問文のみ。
+    """,
+    model="gpt-5-mini",
+    model_settings=ModelSettings(reasoning=Reasoning(effort="low"), verbosity="low"),
+)
+
+
+@dataclass
+class MyRequestContext:
+    db: Session
+    interview_id: int
+
+
+@dataclass
+class MyAgentContext(AgentContext):
+    request_context: MyRequestContext
+
+
+@function_tool
+def read_medical_interview(wrapper: RunContextWrapper[MyAgentContext]) -> dict:
+    """
+    This function retrieves the medical interview form from the database and returns its contents.
+    """
+    db = wrapper.context.request_context.db
+    interview_id = wrapper.context.request_context.interview_id
+
+    db_medical_interview = db.get(MedicalInterview, interview_id)
+
+    medical_interview = {
+        "id": db_medical_interview.id,
+        "appointment_id": db_medical_interview.appointment_id,
+        "initial_consult": db_medical_interview.initial_consult,
+        "initial_findings": db_medical_interview.initial_findings,
+        "visit_reason": db_medical_interview.visit_reason,
+        "symptoms": db_medical_interview.symptoms,
+        "duration": db_medical_interview.duration,
+        "severity": db_medical_interview.severity,
+        "current_medications": db_medical_interview.current_medications,
+        "allergies": db_medical_interview.allergies,
+    }
+
+    return medical_interview
+
+
+@function_tool
+def update_medical_interview(
+    wrapper: RunContextWrapper[MyAgentContext],
+    content: UpdateMedicalInterview,
+) -> dict:
+    """
+    This function takes session_id and job_id and returns a list of
+    skills suitable for that job
+    
+    Args:
+    - content: UpdateMedicalInterview
+    """
+    db = wrapper.context.request_context.db
+    interview_id = wrapper.context.request_context.interview_id
+
+    db_medical_interview = db.get(MedicalInterview, interview_id)
+    
+    if content.initial_consult:
+        db_medical_interview.initial_consult = content.initial_consult
+    if content.initial_findings:
+        db_medical_interview.initial_findings = content.initial_findings
+    if content.visit_reason:
+        db_medical_interview.visit_reason = content.visit_reason
+    if content.symptoms:
+        db_medical_interview.symptoms = content.symptoms
+    if content.duration:
+        db_medical_interview.duration = content.duration
+    if content.severity:
+        db_medical_interview.severity = content.severity
+    if content.current_medications:
+        db_medical_interview.current_medications = content.current_medications
+    if content.allergies:
+        db_medical_interview.allergies = content.allergies
+    
+    db.commit()
+    db.refresh(db_medical_interview)
+
+    medical_interview = {
+        "id": db_medical_interview.id,
+        "appointment_id": db_medical_interview.appointment_id,
+        "initial_consult": db_medical_interview.initial_consult,
+        "initial_findings": db_medical_interview.initial_findings,
+        "visit_reason": db_medical_interview.visit_reason,
+        "symptoms": db_medical_interview.symptoms,
+        "duration": db_medical_interview.duration,
+        "severity": db_medical_interview.severity,
+        "current_medications": db_medical_interview.current_medications,
+        "allergies": db_medical_interview.allergies,
+    }
+
+    return medical_interview
+
+
+medical_interview_agent = Agent(
+    name="Medical Interview Orchestrate Agent",
+    instructions=ORCHESTRATE_PROMPT,
+    model="gpt-5-mini",
+    model_settings=ModelSettings(
+        reasoning=Reasoning(effort="medium"), verbosity="medium"
+    ),
+    tools=[
+        read_medical_interview
+        # chief_complaint_agent.as_tool(
+        #     tool_name="ask_chief_complaint",
+        #     tool_description=(
+        #         "受診の理由（主訴）を確認するための、日本語の質問文を1つ作る。"
+        #         "診断や断定はしない。返すのは質問文のみ。"
+        #     ),
+        # ),
+        # symptom_agent.as_tool(
+        #     tool_name="ask_symptom_details",
+        #     tool_description=(
+        #         "症状の具体化（部位・性質・随伴症状）を聞く、日本語の質問文を1つ作る。"
+        #         "診断や断定はしない。返すのは質問文のみ。"
+        #     ),
+        # ),
+        # duration_agent.as_tool(
+        #     tool_name="ask_duration",
+        #     tool_description=(
+        #         "持続期間（いつから・どれくらい・頻度）を確認する、日本語の質問文を1つ作る。"
+        #         "返すのは質問文のみ。"
+        #     ),
+        # ),
+        # severity_agent.as_tool(
+        #     tool_name="ask_severity",
+        #     tool_description=(
+        #         "重症度（つらさ/痛みの強さ、0〜10など）を確認する、日本語の質問文を1つ作る。"
+        #         "返すのは質問文のみ。"
+        #     ),
+        # ),
+        # medication_agent.as_tool(
+        #     tool_name="ask_current_medications",
+        #     tool_description=(
+        #         "服用中の薬（処方薬・市販薬・サプリ等）を確認する、日本語の質問文を1つ作る。"
+        #         "返すのは質問文のみ。"
+        #     ),
+        # ),
+        # allergies_agent.as_tool(
+        #     tool_name="ask_allergies",
+        #     tool_description=(
+        #         "アレルギー（薬・食物・その他）と症状を確認する、日本語の質問文を1つ作る。"
+        #         "返すのは質問文のみ。"
+        #     ),
+        # ),
+    ],
+)

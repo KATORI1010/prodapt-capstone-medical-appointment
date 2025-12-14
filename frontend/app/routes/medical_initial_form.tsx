@@ -20,11 +20,12 @@ const intakeFreeTextSamples: string[] = [
 
 export async function clientAction({ request, params }: Route.ClientActionArgs) {
     const formData = await request.formData();
-    await fetch("/api/medical_interviews", {
+    const response = await fetch("/api/medical_interviews", {
         method: "POST",
         body: formData,
     })
-    return redirect(`/appointment/${params.appointmentId}/medical-interview`)
+    const result = await response.json()
+    return redirect(`/appointment/${params.appointmentId}/medical-interview/${result.id}`)
 }
 
 

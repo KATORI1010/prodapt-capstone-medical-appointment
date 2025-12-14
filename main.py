@@ -3,6 +3,7 @@ from typing import Annotated
 import string
 import random
 from datetime import datetime
+from dataclasses import dataclass
 
 from pydantic import BaseModel, Field, field_validator
 from fastapi import (
@@ -26,6 +27,7 @@ from openai import OpenAI
 
 from db import get_db_session, get_db, Session
 from models import Appointment, MedicalInterview
+from schemas import CreateMedicalInterview
 from auth import (
     authenticate_admin,
     is_admin,
@@ -34,20 +36,10 @@ from auth import (
     AdminSessionMiddleware,
 )
 from chatkit.server import StreamingResult
-from intake_chat.server import MyChatKitServer
+from intake_chat.server import MyChatKitServer, MyRequestContext
 from intake_chat.store import MyChatKitStore
 
-# from evaluate_resume import evaluate_resume_with_ai
-# from extract_text_from_pdf import extract_text_from_pdf_bytes
-# from ai import (
-#     review_application,
-#     ReviewedApplication,
-#     ingest_resume,
-#     get_vector_store,
-#     QdrantVectorStore,
-#     get_recommendatation,
-# )
-# from emailer import send_email
+
 from config import settings
 
 app = FastAPI()
@@ -78,8 +70,12 @@ server = MyChatKitServer(store=MyChatKitStore())
 
 
 @app.post("/chatkit")
-async def chatkit(request: Request):
-    result = await server.process(await request.body(), context={})
+async def chatkit(request: Request, db: Session = Depends(get_db)):
+    interview_id = request.headers.get("x-interview-id") or "anonymous"
+    print(interview_id)
+    context = MyRequestContext(db=db, interview_id=int(interview_id))
+
+    result = await server.process(await request.body(), context=context)
     if isinstance(result, StreamingResult):
         return StreamingResponse(result, media_type="text/event-stream")
     return Response(content=result.json, media_type="application/json")
@@ -116,22 +112,10 @@ async def api_read_appointments(db: Session = Depends(get_db)):
     return db_appointments
 
 
-class MedicalInterviewForm(BaseModel):
-    appointment_id: int = Field(...)
-    initial_consult: str = Field(None)
-    initial_findings: str | None = Field(None)
-    visit_reason: str | None = Field(None)
-    symptoms: str | None = Field(None)
-    duration: str | None = Field(None)
-    severity: str | None = Field(None)
-    current_medications: str | None = Field(None)
-    allergies: str | None = Field(None)
-
-
 # Create Medical Interviews
 @app.post("/api/medical_interviews")
 async def api_create_medical_interviews(
-    medical_interview_form: Annotated[MedicalInterviewForm, Form()],
+    medical_interview_form: Annotated[CreateMedicalInterview, Form()],
     db: Session = Depends(get_db),
 ):
     db_medical_interview = MedicalInterview(
