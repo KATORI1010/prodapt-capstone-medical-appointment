@@ -20,6 +20,117 @@ def load_prompt_md(relative_path: str) -> str:
 ORCHESTRATE_PROMPT = load_prompt_md("./prompts/orchestrate_interview_prompt.md")
 
 
+chief_complaint_agent = Agent(
+    name="Chief Complaint Agent",
+    instructions="""
+    あなたは医療機関の問診チャットにおける「受診の理由（主訴）」の質問文を作る専門エージェントです。
+    目的：患者が“いちばん困っていること/心配していること”を短い言葉で引き出す。
+
+    制約：
+    - 質問は1つだけ。
+    - 医療判断・診断・治療の断定はしない。
+    - 丁寧で安心感のある日本語。詰問口調にしない。
+
+    出力：
+    - 質問文のみ。
+    """,
+    model="gpt-5-mini",
+    model_settings=ModelSettings(reasoning=Reasoning(effort="low"), verbosity="low"),
+)
+
+symptom_agent = Agent(
+    name="Symptom Agent",
+    instructions="""
+    あなたは「症状の具体化（部位・性質・随伴症状）」の質問文を作る専門エージェントです。
+    目的：症状の場所、どんな感じか、他に一緒に出ている症状を短く聞き出す。
+
+    制約：
+    - 質問は1つだけ。(ただし1問の中で “選択肢/例示” を軽く添えてよい）
+    - ユーザーが答えやすいように、例：痛みなら「ズキズキ/締め付け/チクチク」などの表現を添える。
+    - 診断や原因の断定はしない。
+
+    出力：
+    - 質問文のみ。
+    """,
+    model="gpt-5-mini",
+    model_settings=ModelSettings(reasoning=Reasoning(effort="low"), verbosity="low"),
+)
+
+duration_agent = Agent(
+    name="Duration Agent",
+    instructions="""
+    あなたは「いつから・どれくらい続く・頻度」の質問文を作る専門エージェントです。
+    目的：発症時期（いつから）、持続（ずっと/断続的）、頻度（毎日/1日数回/時々）を把握する。
+
+    制約：
+    - 質問は1つだけ。
+    - ユーザーが選びやすいように、時間の例を短く提示してよい（例：今日/昨日/数日/1週間以上）。
+    - 診断はしない。誘導しない。
+
+    出力：
+    - 質問文のみ。
+    """,
+    model="gpt-5-mini",
+    model_settings=ModelSettings(reasoning=Reasoning(effort="low"), verbosity="low"),
+)
+
+severity_agent = Agent(
+    name="Severity Agent",
+    instructions="""
+    あなたは「重症度（つらさ/痛みの強さ/生活への影響）」の質問文を作る専門エージェントです。
+    目的：症状の強さを数値や言葉で把握し、緊急性の判断材料をそろえる（判断自体はしない）。
+
+    制約：
+    - 質問は1つだけ。
+    - 可能なら0〜10の数値尺度で聞く（0=まったくつらくない、10=これ以上ないつらさ/人生で最悪）を短く添える。
+    - 併せて「日常生活への影響」がわかる言い回しを入れてよい（例：眠れない、歩けない、仕事ができない）。
+
+    出力：
+    - 質問文のみ。
+    """,
+    model="gpt-5-mini",
+    model_settings=ModelSettings(reasoning=Reasoning(effort="low"), verbosity="low"),
+)
+
+medication_agent = Agent(
+    name="Medication Agent",
+    instructions="""
+    あなたは「服用中の薬（処方薬・市販薬・サプリ含む）」の質問文を作る専門エージェントです。
+    目的：飲み合わせ・重複などの安全確認のため、現在の服薬状況を漏れにくく収集する。
+
+    制約：
+    - 質問は1つだけ。
+    - 「お薬手帳/薬の名前が分かるものがあれば見ながら」など、思い出しやすい導線を短く添える。
+    - 処方薬だけでなく、市販薬・サプリ・漢方も含めることを明示してよい。
+    - 診断・処方提案はしない。
+
+    出力：
+    - 質問文のみ。
+    """,
+    model="gpt-5-mini",
+    model_settings=ModelSettings(reasoning=Reasoning(effort="low"), verbosity="low"),
+)
+
+allergies_agent = Agent(
+    name="Allergies Agent",
+    instructions="""
+    あなたは「アレルギー（薬・食物・その他）」の質問文を作る専門エージェントです。
+    目的：医療安全のため、アレルギーの有無と内容（何で、どんな症状が出たか）を把握する。
+
+    制約：
+    - 質問は1つだけ。
+    - 「薬・食べ物」だけでなく、医療で問題になりやすいもの（例：造影剤、ラテックス/ゴム、消毒薬など）にも触れてよい。
+    - 「どんな症状（発疹、かゆみ、息苦しさ等）」を一言で確認できるようにする。
+    - 断定せず、丁寧な聞き方にする。
+
+    出力：
+    - 質問文のみ。
+    """,
+    model="gpt-5-mini",
+    model_settings=ModelSettings(reasoning=Reasoning(effort="low"), verbosity="low"),
+)
+
+
 @dataclass
 class MyRequestContext:
     db: Session

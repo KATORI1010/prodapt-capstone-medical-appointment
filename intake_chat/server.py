@@ -22,12 +22,6 @@ from medical_agents.medical_interview_agent_modifing import (
 
 load_dotenv()
 
-assistant = Agent(
-    name="assistant",
-    instructions="You are a helpful assistant.",
-    model="gpt-4.1-mini",
-)
-
 
 class MyChatKitServer(ChatKitServer[dict]):
     async def respond(

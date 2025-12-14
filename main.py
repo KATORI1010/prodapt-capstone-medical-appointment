@@ -143,6 +143,19 @@ async def api_read_medical_interviews(
     return db_medical_interviews
 
 
+# Read One Medical Interviews
+@app.get("/api/medical_interviews/{interview_id}")
+async def api_read_medical_interview_by_id(
+    interview_id: int, db: Session = Depends(get_db)
+):
+    db_medical_interview = db.get(MedicalInterview, interview_id)
+    if not db_medical_interview:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Medical interview not found."
+        )
+    return db_medical_interview
+
+
 @app.get("/{full_path:path}")
 async def catch_all(full_path: str):
     indexFilePath = os.path.join("frontend", "build", "client", "index.html")

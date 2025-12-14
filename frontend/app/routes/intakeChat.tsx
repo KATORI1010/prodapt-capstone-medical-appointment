@@ -1,11 +1,16 @@
 // IntakeChat.tsx
 import { ChatKit, useChatKit } from "@openai/chatkit-react";
 import type { ChatKitOptions } from "@openai/chatkit";
+import type { UseChatKitOptions } from "@openai/chatkit-react";
+
+type IntakeChatProps = {
+    interviewId: string;
+    responseEndHandler: () => void;
+}
 
 
-
-export function IntakeChat({ interviewId }: { interviewId: string }) {
-    const options: ChatKitOptions = {
+export function IntakeChat({ interviewId, responseEndHandler }: IntakeChatProps) {
+    const options: UseChatKitOptions = {
         api: {
             url: "/chatkit",
             domainKey: "local-dev",
@@ -29,6 +34,7 @@ export function IntakeChat({ interviewId }: { interviewId: string }) {
             //     return client_secret;
             // },
         },
+        onResponseEnd: responseEndHandler,
         theme: {
             colorScheme: 'light',
             radius: 'round',
@@ -45,7 +51,7 @@ export function IntakeChat({ interviewId }: { interviewId: string }) {
                 // }
             },
             typography: {
-                baseSize: 16,
+                baseSize: 14,
                 fontFamily: '"OpenAI Sans", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif',
                 fontFamilyMono: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "DejaVu Sans Mono", "Courier New", monospace',
                 fontSources: [
