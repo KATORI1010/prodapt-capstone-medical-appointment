@@ -1,14 +1,10 @@
-from dataclasses import dataclass
 from pathlib import Path
 
-from sqlalchemy import desc
 from openai.types.shared import Reasoning
-from agents import Agent, ModelSettings, function_tool, RunContextWrapper
-from chatkit.agents import AgentContext
+from agents import Agent, ModelSettings
 
-from db import Session
-from models import MedicalInterview
-from schemas import UpdateMedicalInterview
+from medical_agents.tools import update_medical_interview
+from medical_agents.review_interview_agent import review_interview_agent
 
 
 def load_prompt_md(relative_path: str) -> str:
@@ -20,88 +16,6 @@ def load_prompt_md(relative_path: str) -> str:
 ORCHESTRATE_PROMPT = load_prompt_md("./prompts/orchestrate_interview_prompt.md")
 
 
-@dataclass
-class MyRequestContext:
-    db: Session
-    interview_id: int
-
-
-# @dataclass
-class MyAgentContext(AgentContext):
-    request_context: MyRequestContext
-
-
-@function_tool
-def read_medical_interview(wrapper: RunContextWrapper[MyAgentContext]) -> dict:
-    """
-    This function retrieves the medical interview form from the database
-    and returns its contents.
-    """
-    db = wrapper.context.request_context.db
-    interview_id = wrapper.context.request_context.interview_id
-
-    obj = db.get(MedicalInterview, interview_id)
-
-    return {
-        "ok": True,
-        "medical_interview": {
-            "id": obj.id,
-            "appointment_id": obj.appointment_id,
-            "initial_consult": obj.initial_consult,
-            "initial_findings": obj.initial_findings,
-            "visit_reason": obj.visit_reason,
-            "symptoms": obj.symptoms,
-            "duration": obj.duration,
-            "severity": obj.severity,
-            "current_medications": obj.current_medications,
-            "allergies": obj.allergies,
-        },
-    }
-
-
-@function_tool
-def update_medical_interview(
-    wrapper: RunContextWrapper[MyAgentContext],
-    content: UpdateMedicalInterview,
-) -> dict:
-    """
-    This function updates the questionnaire in the database.
-    It updates only the items entered as arguments.
-
-    Args:
-    - content: UpdateMedicalInterview
-    """
-    db = wrapper.context.request_context.db
-    interview_id = wrapper.context.request_context.interview_id
-
-    obj = db.get(MedicalInterview, interview_id)
-    if obj is None:
-        return {"ok": False, "error": "MedicalInterview not found"}
-
-    updates = content.model_dump(exclude_unset=True)
-    for k, v in updates.items():
-        setattr(obj, k, v)
-
-    db.commit()
-    db.refresh(obj)
-
-    return {
-        "ok": True,
-        "medical_interview": {
-            "id": obj.id,
-            "appointment_id": obj.appointment_id,
-            "initial_consult": obj.initial_consult,
-            "initial_findings": obj.initial_findings,
-            "visit_reason": obj.visit_reason,
-            "symptoms": obj.symptoms,
-            "duration": obj.duration,
-            "severity": obj.severity,
-            "current_medications": obj.current_medications,
-            "allergies": obj.allergies,
-        },
-    }
-
-
 medical_interview_agent = Agent(
     name="Medical Interview Orchestrate Agent",
     instructions=ORCHESTRATE_PROMPT,
@@ -110,49 +24,15 @@ medical_interview_agent = Agent(
         reasoning=Reasoning(effort="medium"), verbosity="medium"
     ),
     tools=[
-        read_medical_interview,
+        # read_medical_interview,
         update_medical_interview,
-        # chief_complaint_agent.as_tool(
-        #     tool_name="ask_chief_complaint",
-        #     tool_description=(
-        #         "受診の理由（主訴）を確認するための、日本語の質問文を1つ作る。"
-        #         "診断や断定はしない。返すのは質問文のみ。"
-        #     ),
-        # ),
-        # symptom_agent.as_tool(
-        #     tool_name="ask_symptom_details",
-        #     tool_description=(
-        #         "症状の具体化（部位・性質・随伴症状）を聞く、日本語の質問文を1つ作る。"
-        #         "診断や断定はしない。返すのは質問文のみ。"
-        #     ),
-        # ),
-        # duration_agent.as_tool(
-        #     tool_name="ask_duration",
-        #     tool_description=(
-        #         "持続期間（いつから・どれくらい・頻度）を確認する、日本語の質問文を1つ作る。"
-        #         "返すのは質問文のみ。"
-        #     ),
-        # ),
-        # severity_agent.as_tool(
-        #     tool_name="ask_severity",
-        #     tool_description=(
-        #         "重症度（つらさ/痛みの強さ、0〜10など）を確認する、日本語の質問文を1つ作る。"
-        #         "返すのは質問文のみ。"
-        #     ),
-        # ),
-        # medication_agent.as_tool(
-        #     tool_name="ask_current_medications",
-        #     tool_description=(
-        #         "服用中の薬（処方薬・市販薬・サプリ等）を確認する、日本語の質問文を1つ作る。"
-        #         "返すのは質問文のみ。"
-        #     ),
-        # ),
-        # allergies_agent.as_tool(
-        #     tool_name="ask_allergies",
-        #     tool_description=(
-        #         "アレルギー（薬・食物・その他）と症状を確認する、日本語の質問文を1つ作る。"
-        #         "返すのは質問文のみ。"
-        #     ),
-        # ),
+        review_interview_agent.as_tool(
+            tool_name="review_interview_agent",
+            tool_description="""
+                問診内容に不十分な部分が無いか確認するレビュアーエージェントです。
+                問診票の内容を受け渡してレビューを依頼して下さい。
+                結果として合否と総括コメントを受け取れます。
+            """,
+        ),
     ],
 )
