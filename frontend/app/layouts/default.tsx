@@ -29,7 +29,7 @@ export default function DefaultLayout({ loaderData }: Route.ComponentProps) {
         </NavLink>
         {/* <Hospital size="40px" className="ml-2" /> */}
         <NavLink to="/" className={navLinkStyle}>Home</NavLink>
-        <NavLink to="/job-boards" className={navLinkStyle}>JobBoards</NavLink>
+        {/* <NavLink to="/job-boards" className={navLinkStyle}>JobBoards</NavLink> */}
 
         {loaderData.isAdmin
           ? <NavLink to="/admin-logout" className={navLinkStyle}>Logout</NavLink>

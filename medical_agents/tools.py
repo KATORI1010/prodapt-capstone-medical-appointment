@@ -4,7 +4,7 @@ from datetime import datetime
 from pydantic import BaseModel, Field, ConfigDict
 from agents import function_tool, RunContextWrapper
 from chatkit.agents import AgentContext
-from chatkit.types import ProgressUpdateEvent
+from chatkit.types import ProgressUpdateEvent, ClientEffectEvent
 
 from db import Session
 from models import MedicalInterview
@@ -33,6 +33,22 @@ async def report_progress(ctx: RunContextWrapper[MyAgentContext], text: str) -> 
     - text: The message to notify
     """
     await ctx.context.stream(ProgressUpdateEvent(text=text))
+
+
+@function_tool
+async def report_completion(ctx: RunContextWrapper[MyAgentContext]) -> None:
+    """
+    This function notifies the interview completion to user.
+    """
+    print("!!!!!!!!!!!!!!!!!!!!!!! Completed !!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+    await ctx.context.stream(ProgressUpdateEvent(text="Review passed."))
+
+    await ctx.context.stream(
+        ClientEffectEvent(
+            name="interview_completed",
+            data={"nextUrl": f"/next/{ctx.context.request_context.interview_id}"},
+        )
+    )
 
 
 @function_tool
@@ -106,6 +122,20 @@ async def update_medical_interview(
             "allergies": obj.allergies,
         },
     }
+
+
+@function_tool
+def read_intake_form(ctx: RunContextWrapper[MyAgentContext]) -> dict:
+    """
+    This function retrieves the intake form from the database
+    and returns its contents.
+    """
+    db = ctx.context.request_context.db
+    interview_id = ctx.context.request_context.interview_id
+
+    obj = db.get(MedicalInterview, interview_id)
+
+    return obj.intake
 
 
 @function_tool

@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import type { Route } from "../+types/root";
 
 import { IntakeChat } from "./intakeChat";
+import { CompleteDialog } from "./completeDialog";
 
 export async function clientLoader({ request, params }: Route.ClientLoaderArgs) {
     const res = await fetch(`/api/medical_interviews/${params.interviewId}`);
@@ -12,8 +13,9 @@ export async function clientLoader({ request, params }: Route.ClientLoaderArgs) 
 
 export default function MedicalInterview({ loaderData, params }: Route.ComponentProps) {
     const interviewId = params.interviewId ?? ""
-    const [interviewForm, setInterviewForm] = useState(null);
+    const [interviewForm, setInterviewForm] = useState("");
     const [flash, setFlash] = useState(false);
+    const [completed, setCompleted] = useState(false);
 
     const responseEndHandler = async () => {
         const res = await fetch(`/api/medical_interviews/${interviewId}`);
@@ -21,9 +23,11 @@ export default function MedicalInterview({ loaderData, params }: Route.Component
         setInterviewForm(data.intake);
     }
 
-    // useEffect(() => {
-    //     responseEndHandler();
-    // }, [])
+    const effectHander = ({ name, data }: { name: string, data: string }) => {
+        if (name === "interview_completed") {
+            setCompleted(true);
+        }
+    }
 
     useEffect(() => {
         if (!interviewForm) {
@@ -35,27 +39,21 @@ export default function MedicalInterview({ loaderData, params }: Route.Component
         return () => window.clearTimeout(t);
     }, [interviewForm]);
 
-    // alert(interviewId);
     return (
-        // <div className="w-full flex flex-col">
-        //     <div className="max-w-3xl mx-auto my-8">
-        //         <IntakeChat interviewId={interviewId} />
-        //     </div>
-        //     <div>
-        //         qqq
-        //         {interviewForm}
-        //     </div>
-        // </div>
         <div className="h-screen w-full flex">
             {/* 左：Chat */}
             <div className="w-1/2 border-r">
-                <IntakeChat interviewId={interviewId} initialMessage={loaderData.initialMessage} responseEndHandler={responseEndHandler} />
+                <IntakeChat
+                    interviewId={interviewId}
+                    initialMessage={loaderData.initialMessage}
+                    responseEndHandler={responseEndHandler}
+                    effectHander={effectHander}
+                />
             </div>
 
             {/* 右：問診表 */}
             <div className="w-1/2 p-4 overflow-auto">
                 <div className="font-semibold mb-2">Medical Interview Form</div>
-                {/* <div>{interviewForm || "（まだデータがありません）"}</div> */}
                 <div
                     className={[
                         "transition-colors",
@@ -67,6 +65,7 @@ export default function MedicalInterview({ loaderData, params }: Route.Component
                     </pre>
                 </div>
             </div>
+            <CompleteDialog open={completed} setOpen={setCompleted} interviewForm={interviewForm} />
         </div>
     )
 }

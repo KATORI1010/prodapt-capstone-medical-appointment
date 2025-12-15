@@ -7,10 +7,11 @@ type IntakeChatProps = {
     interviewId: string;
     initialMessage?: string;
     responseEndHandler: () => void;
+    effectHander?: ({ name, data }: { name: string, data: string }) => void;
 }
 
 
-export function IntakeChat({ interviewId, initialMessage, responseEndHandler }: IntakeChatProps) {
+export function IntakeChat({ interviewId, initialMessage, responseEndHandler, effectHander }: IntakeChatProps) {
     const options: UseChatKitOptions = {
         api: {
             url: "/chatkit",
@@ -46,6 +47,7 @@ export function IntakeChat({ interviewId, initialMessage, responseEndHandler }: 
         },
         // チャットのレスポンス終了時に画面のデータ更新を行う
         onResponseEnd: responseEndHandler,
+        onEffect: effectHander,
         theme: {
             colorScheme: 'light',
             radius: 'pill',

@@ -3,7 +3,7 @@ from pathlib import Path
 from openai.types.shared import Reasoning
 from agents import Agent, ModelSettings
 
-from medical_agents.tools import update_medical_interview, update_intake_form
+from medical_agents.tools import update_intake_form, report_completion
 from medical_agents.review_interview_agent import review_interview_agent
 
 
@@ -21,7 +21,7 @@ medical_interview_agent = Agent(
     instructions=ORCHESTRATE_PROMPT,
     model="gpt-5-mini",
     model_settings=ModelSettings(
-        reasoning=Reasoning(effort="low"), verbosity="low"
+        reasoning=Reasoning(effort="medium"), verbosity="low"
     ),
     tools=[
         # read_medical_interview,
@@ -35,5 +35,6 @@ medical_interview_agent = Agent(
                 結果として合否と総括コメントを受け取れます。
             """,
         ),
+        report_completion,
     ],
 )
