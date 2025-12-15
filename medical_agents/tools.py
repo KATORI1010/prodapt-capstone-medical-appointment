@@ -1,5 +1,7 @@
 from dataclasses import dataclass
+from datetime import datetime
 
+from pydantic import BaseModel, Field, ConfigDict
 from agents import function_tool, RunContextWrapper
 from chatkit.agents import AgentContext
 from chatkit.types import ProgressUpdateEvent
@@ -7,6 +9,8 @@ from chatkit.types import ProgressUpdateEvent
 from db import Session
 from models import MedicalInterview
 from schemas import UpdateMedicalInterview
+
+from medical_agents.intake_schemas import IntakeForm, IntakeFormPatch
 
 
 @dataclass
@@ -100,5 +104,71 @@ async def update_medical_interview(
             "severity": obj.severity,
             "current_medications": obj.current_medications,
             "allergies": obj.allergies,
+        },
+    }
+
+
+@function_tool
+async def update_intake_form(
+    ctx: RunContextWrapper[MyAgentContext],
+    patch: IntakeFormPatch,
+) -> dict:
+    """
+    Partially updates an IntakeForm stored in a single PostgreSQL JSONB column.
+
+    Behavior:
+    - Only fields explicitly provided in `patch` will be applied.
+    - Fields not provided in `patch` will remain unchanged.
+    - The updated form is written back to the JSONB column as a plain dict.
+    - Returns the updated JSON payload so the UI can refresh the right pane.
+
+    Notes:
+    - List fields (symptoms/medications/allergies) are replaced as a whole if provided.
+      For "append one item" behavior, create separate append_* tools.
+    """
+    await ctx.context.stream(ProgressUpdateEvent(text="Updating intake form in DB..."))
+
+    db = ctx.context.request_context.db
+    interview_id = ctx.context.request_context.interview_id
+
+    obj = db.get(MedicalInterview, interview_id)
+    if obj is None:
+        return {"ok": False, "error": "MedicalInterview not found"}
+
+    # 1) JSONB (dict) -> Pydantic. If empty, initialize to defaults.
+    current_form = IntakeForm.model_validate(obj.intake or {})
+
+    # 2) Keep only fields actually provided by the model (PATCH semantics).
+    updates = patch.model_dump(exclude_unset=True, mode="json")
+
+    # Optional safety: ignore explicit null for list fields (treat as "no update")
+    for k in ("symptoms", "medications", "allergies"):
+        if k in updates and updates[k] is None:
+            updates.pop(k)
+
+    # 3) Merge and set timestamp.
+    merged = current_form.model_dump(mode="json")
+    merged.update(updates)
+    merged["updated_at"] = datetime.utcnow().isoformat()
+
+    # Optional safety: normalize list fields if they somehow become null
+    for k in ("symptoms", "medications", "allergies"):
+        if merged.get(k) is None:
+            merged[k] = []
+
+    # 4) Validate BEFORE DB write, then store dict into JSONB.
+    obj.intake = IntakeForm.model_validate(merged).model_dump(mode="json")
+
+    db.commit()
+    db.refresh(obj)
+
+    await ctx.context.stream(ProgressUpdateEvent(text="Update complete."))
+
+    return {
+        "ok": True,
+        "medical_interview": {
+            "id": obj.id,
+            "appointment_id": obj.appointment_id,
+            "form": obj.intake,
         },
     }

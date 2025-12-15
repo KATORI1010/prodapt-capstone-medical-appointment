@@ -22,7 +22,7 @@ from models import MedicalInterview
 from config import settings
 
 from medical_agents.tools import MyRequestContext, MyAgentContext
-from medical_agents.medical_interview_agent_modifing import medical_interview_agent
+from medical_agents.medical_interview_agent import medical_interview_agent
 
 load_dotenv()
 truststore.inject_into_ssl()  # SSL証明書エラーの対応のため
@@ -40,21 +40,23 @@ class MyChatKitServer(ChatKitServer[dict]):
 
         obj = db.get(MedicalInterview, interview_id)
 
-        interview_data = {
-            "ok": True,
-            "medical_interview": {
-                "id": obj.id,
-                "appointment_id": obj.appointment_id,
-                "initial_consult": obj.initial_consult,
-                "initial_findings": obj.initial_findings,
-                "visit_reason": obj.visit_reason,
-                "symptoms": obj.symptoms,
-                "duration": obj.duration,
-                "severity": obj.severity,
-                "current_medications": obj.current_medications,
-                "allergies": obj.allergies,
-            },
-        }
+        # interview_data = {
+        #     "ok": True,
+        #     "medical_interview": {
+        #         "id": obj.id,
+        #         "appointment_id": obj.appointment_id,
+        #         "initial_consult": obj.initial_consult,
+        #         "initial_findings": obj.initial_findings,
+        #         "visit_reason": obj.visit_reason,
+        #         "symptoms": obj.symptoms,
+        #         "duration": obj.duration,
+        #         "severity": obj.severity,
+        #         "current_medications": obj.current_medications,
+        #         "allergies": obj.allergies,
+        #     },
+        # }
+        
+        interview_data = obj.intake
 
         hidden_context = HiddenContextItem(
             id=f"hc_{uuid.uuid4().hex}",
@@ -68,11 +70,12 @@ class MyChatKitServer(ChatKitServer[dict]):
             thread.id,
             after=None,
             limit=20,
-            order="asc",
+            order="desc",
             context=context,
         )
+        items = list(reversed(items_page.data))
         # input_items = await simple_to_agent_input(items_page.data)
-        input_items = await simple_to_agent_input([hidden_context, *items_page.data])
+        input_items = await simple_to_agent_input([hidden_context, *items])
 
         set_trace_processors(
             [

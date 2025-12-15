@@ -24,7 +24,10 @@ export default function DefaultLayout({ loaderData }: Route.ComponentProps) {
   return (
     <main className="max-h-screen">
       <nav className="flex items-center gap-4 w-full h-16 px-4 border-b">
-        <Hospital size="40px" className="ml-2" />
+        <NavLink to="/">
+          <Hospital size="40px" className="ml-2" />
+        </NavLink>
+        {/* <Hospital size="40px" className="ml-2" /> */}
         <NavLink to="/" className={navLinkStyle}>Home</NavLink>
         <NavLink to="/job-boards" className={navLinkStyle}>JobBoards</NavLink>
 

@@ -14,7 +14,8 @@ const intakeFreeTextSamples: string[] = [
     "My throat has been sore since two days ago, and I also have a runny nose. It feels worse in the morning. I don’t have a high fever, but I feel slightly warm sometimes.",
     "I noticed some pain in my lower back after lifting heavy boxes last weekend. It’s not sharp, more like a constant ache. It hurts more when I bend or stand up after sitting for a while.",
     "I’ve been coughing a lot, mostly at night. It started maybe 10 days ago. Sometimes I feel short of breath, but it goes away after a few minutes. I’m not sure if it’s allergies or something else.",
-    "For the past few months, I’ve had occasional stomach discomfort, especially after eating greasy food. It’s not very painful, just uncomfortable and bloated. No vomiting, but sometimes mild diarrhea."
+    "For the past few months, I’ve had occasional stomach discomfort, especially after eating greasy food. It’s not very painful, just uncomfortable and bloated. No vomiting, but sometimes mild diarrhea.",
+    "2週間ほど前から微熱が続いており、3日前の朝に急に下半身が痺れてしまいました。"
 ];
 
 

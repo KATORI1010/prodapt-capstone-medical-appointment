@@ -18,7 +18,7 @@ export default function MedicalInterview({ loaderData, params }: Route.Component
     const responseEndHandler = async () => {
         const res = await fetch(`/api/medical_interviews/${interviewId}`);
         const data = await res.json();
-        setInterviewForm(data);
+        setInterviewForm(data.intake);
     }
 
     // useEffect(() => {
@@ -48,12 +48,12 @@ export default function MedicalInterview({ loaderData, params }: Route.Component
         // </div>
         <div className="h-screen w-full flex">
             {/* 左：Chat */}
-            <div className="w-2/5 border-r">
+            <div className="w-1/2 border-r">
                 <IntakeChat interviewId={interviewId} initialMessage={loaderData.initialMessage} responseEndHandler={responseEndHandler} />
             </div>
 
             {/* 右：問診表 */}
-            <div className="w-3/5 p-4 overflow-auto">
+            <div className="w-1/2 p-4 overflow-auto">
                 <div className="font-semibold mb-2">Medical Interview Form</div>
                 {/* <div>{interviewForm || "（まだデータがありません）"}</div> */}
                 <div

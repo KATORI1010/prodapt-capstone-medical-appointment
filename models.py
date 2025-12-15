@@ -61,6 +61,7 @@ class MedicalInterview(Base):
     current_medications = Column(Text, nullable=True)
     allergies = Column(Text, nullable=True)
     created_at = Column(DateTime, nullable=True)
+    intake = Column(JSONB, nullable=True, default={})
     appointment = relationship("Appointment", back_populates="medical_interviews")
 
 

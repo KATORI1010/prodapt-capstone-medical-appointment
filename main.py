@@ -139,10 +139,19 @@ async def api_create_medical_interviews(
     medical_interview_form: Annotated[CreateMedicalInterview, Form()],
     db: Session = Depends(get_db),
 ):
+    db_appointment = db.get(Appointment, medical_interview_form.appointment_id)
+    print(db_appointment.patient.first_name)
+    
     db_medical_interview = MedicalInterview(
         appointment_id=medical_interview_form.appointment_id,
         initial_consult=medical_interview_form.initial_consult,
         created_at=datetime.now(),
+        intake={
+            "full_name": " ".join([db_appointment.patient.first_name, db_appointment.patient.last_name]),
+            "age_years": db_appointment.patient.age,
+            "sex": db_appointment.patient.gender,
+            "initial_patient_message": medical_interview_form.initial_consult
+        }
     )
     db.add(db_medical_interview)
     db.commit()
@@ -154,7 +163,7 @@ async def api_create_medical_interviews(
 @app.get("/api/medical_interviews")
 async def api_read_medical_interviews(
     appointment_id: int, db: Session = Depends(get_db)
-):
+):    
     db_medical_interviews = (
         db.query(MedicalInterview)
         .filter(MedicalInterview.appointment_id == appointment_id)
