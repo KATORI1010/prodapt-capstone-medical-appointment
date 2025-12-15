@@ -13,28 +13,30 @@ def load_prompt_md(relative_path: str) -> str:
     return Path(prompt_path).read_text(encoding="utf-8-sig")
 
 
-ORCHESTRATE_PROMPT = load_prompt_md("./prompts/orchestrate_interview_prompt.md")
+# ORCHESTRATE_PROMPT = load_prompt_md("./prompts/orchestrate_interview_prompt.md")
+ORCHESTRATE_PROMPT = load_prompt_md("./prompts/test.md")
 
 
-medical_interview_agent = Agent(
-    name="Medical Interview Orchestrate Agent",
-    instructions=ORCHESTRATE_PROMPT,
-    model="gpt-5-mini",
-    model_settings=ModelSettings(
-        reasoning=Reasoning(effort="medium"), verbosity="low"
-    ),
-    tools=[
-        # read_medical_interview,
-        # update_medical_interview,
-        update_intake_form,
-        review_interview_agent.as_tool(
-            tool_name="review_interview_agent",
-            tool_description="""
-                問診内容に不十分な部分が無いか確認するレビュアーエージェントです。
-                問診票の内容を受け渡してレビューを依頼して下さい。
-                結果として合否と総括コメントを受け取れます。
-            """,
+def medical_interview_agent(model: str) -> Agent:
+    return Agent(
+        name="Medical Interview Orchestrate Agent",
+        instructions=ORCHESTRATE_PROMPT,
+        model=model,
+        model_settings=ModelSettings(
+            reasoning=Reasoning(effort="medium"), verbosity="low"
         ),
-        report_completion,
-    ],
-)
+        tools=[
+            # read_medical_interview,
+            # update_medical_interview,
+            update_intake_form,
+            review_interview_agent.as_tool(
+                tool_name="review_interview_agent",
+                tool_description="""
+                    問診内容に不十分な部分が無いか確認するレビュアーエージェントです。
+                    問診票の内容を受け渡してレビューを依頼して下さい。
+                    結果として合否と総括コメントを受け取れます。
+                """,
+            ),
+            report_completion,
+        ],
+    )

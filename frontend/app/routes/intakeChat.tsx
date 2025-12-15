@@ -1,17 +1,19 @@
 // IntakeChat.tsx
 import { ChatKit, useChatKit } from "@openai/chatkit-react";
-import type { ChatKitOptions } from "@openai/chatkit";
 import type { UseChatKitOptions } from "@openai/chatkit-react";
 
 type IntakeChatProps = {
     interviewId: string;
     initialMessage?: string;
-    responseEndHandler: () => void;
-    effectHander?: ({ name, data }: { name: string, data: string }) => void;
+    responseEndHandler: (event: void) => void;
+    effectHandler?: (event: {
+        name: string;
+        data?: Record<string, unknown>;
+    }) => void;
 }
 
 
-export function IntakeChat({ interviewId, initialMessage, responseEndHandler, effectHander }: IntakeChatProps) {
+export function IntakeChat({ interviewId, initialMessage, responseEndHandler, effectHandler }: IntakeChatProps) {
     const options: UseChatKitOptions = {
         api: {
             url: "/chatkit",
@@ -47,7 +49,7 @@ export function IntakeChat({ interviewId, initialMessage, responseEndHandler, ef
         },
         // チャットのレスポンス終了時に画面のデータ更新を行う
         onResponseEnd: responseEndHandler,
-        onEffect: effectHander,
+        onEffect: effectHandler,
         theme: {
             colorScheme: 'light',
             radius: 'pill',
@@ -79,11 +81,29 @@ export function IntakeChat({ interviewId, initialMessage, responseEndHandler, ef
                 ]
             }
         },
+        history: {  // ヒストリー機能を無効化
+            enabled: false,
+            showDelete: false,
+            showRename: false,
+        },
         composer: {
             placeholder: 'Please respond to the medical question.',
             attachments: {  // ファイルの添付機能を無効化
                 enabled: false
             },
+            models: [
+                {
+                    id: "gpt-5-mini",
+                    label: "gpt-5-mini",
+                    description: "Light model",
+                },
+                {
+                    id: "gpt-5.2",
+                    label: "gpt-5.2",
+                    description: "High performance",
+                    default: true,
+                },
+            ],
         },
         startScreen: {
             greeting: 'What symptoms are troubling you?',

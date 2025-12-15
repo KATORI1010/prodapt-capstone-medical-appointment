@@ -1,10 +1,9 @@
 from dataclasses import dataclass
 from datetime import datetime
 
-from pydantic import BaseModel, Field, ConfigDict
 from agents import function_tool, RunContextWrapper
 from chatkit.agents import AgentContext
-from chatkit.types import ProgressUpdateEvent, ClientEffectEvent
+from chatkit.types import ProgressUpdateEvent, ClientEffectEvent, ClosedStatus
 
 from db import Session
 from models import MedicalInterview
@@ -32,6 +31,7 @@ async def report_progress(ctx: RunContextWrapper[MyAgentContext], text: str) -> 
     Args:
     - text: The message to notify
     """
+    # ステータスメッセージの更新
     await ctx.context.stream(ProgressUpdateEvent(text=text))
 
 
@@ -40,15 +40,23 @@ async def report_completion(ctx: RunContextWrapper[MyAgentContext]) -> None:
     """
     This function notifies the interview completion to user.
     """
-    print("!!!!!!!!!!!!!!!!!!!!!!! Completed !!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+    # ステータスメッセージの更新
     await ctx.context.stream(ProgressUpdateEvent(text="Review passed."))
 
+    # ClientのonEffectフックへの連携
     await ctx.context.stream(
         ClientEffectEvent(
             name="interview_completed",
-            data={"nextUrl": f"/next/{ctx.context.request_context.interview_id}"},
+            data={},
         )
     )
+
+    # Threadのクローズ
+    thread = ctx.context.thread
+    store = ctx.context.store
+    request_context = ctx.context.request_context
+    thread.status = ClosedStatus(reason="Medical interview completed.")
+    await store.save_thread(thread, context=request_context)
 
 
 @function_tool

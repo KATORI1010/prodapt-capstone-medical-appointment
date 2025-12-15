@@ -38,26 +38,13 @@ class MyChatKitServer(ChatKitServer[dict]):
         db = context.db
         interview_id = context.interview_id
 
+        # 選択されたモデルの取得
+        options = input_user_message and input_user_message.inference_options
+        model = options.model if options and options.model else "gpt-5-mini"
+
+        # 問診票データの取得とHiddenContextへの格納
         obj = db.get(MedicalInterview, interview_id)
-
-        # interview_data = {
-        #     "ok": True,
-        #     "medical_interview": {
-        #         "id": obj.id,
-        #         "appointment_id": obj.appointment_id,
-        #         "initial_consult": obj.initial_consult,
-        #         "initial_findings": obj.initial_findings,
-        #         "visit_reason": obj.visit_reason,
-        #         "symptoms": obj.symptoms,
-        #         "duration": obj.duration,
-        #         "severity": obj.severity,
-        #         "current_medications": obj.current_medications,
-        #         "allergies": obj.allergies,
-        #     },
-        # }
-        
         interview_data = obj.intake
-
         hidden_context = HiddenContextItem(
             id=f"hc_{uuid.uuid4().hex}",
             thread_id=thread.id,
@@ -65,18 +52,20 @@ class MyChatKitServer(ChatKitServer[dict]):
             content=f"<MEDICAL_INTERVIEW_FORM>\n{interview_data}\n</MEDICAL_INTERVIEW_FORM>",
         )
 
-        # Convert recent thread items (which includes the user message) to model input
+        # Storeから直近のチャット履歴を取得
         items_page = await self.store.load_thread_items(
             thread.id,
             after=None,
-            limit=20,
+            limit=30,
             order="desc",
             context=context,
         )
         items = list(reversed(items_page.data))
-        # input_items = await simple_to_agent_input(items_page.data)
+
+        # チャット履歴と問診票データ(HiddenContext)を結合してAgent Inputを作成
         input_items = await simple_to_agent_input([hidden_context, *items])
 
+        # BraintrustにTracingを送信
         set_trace_processors(
             [
                 BraintrustTracingProcessor(
@@ -91,7 +80,7 @@ class MyChatKitServer(ChatKitServer[dict]):
             thread=thread, store=self.store, request_context=context
         )
         result = Runner.run_streamed(
-            medical_interview_agent, input_items, context=agent_context
+            medical_interview_agent(model=model), input_items, context=agent_context
         )
         async for event in stream_agent_response(agent_context, result):
             yield event

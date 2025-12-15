@@ -23,9 +23,9 @@ export default function MedicalInterview({ loaderData, params }: Route.Component
         setInterviewForm(data.intake);
     }
 
-    const effectHander = ({ name, data }: { name: string, data: string }) => {
+    const effectHander = ({ name, data }: { name: string, data?: Record<string, unknown> }) => {
         if (name === "interview_completed") {
-            setCompleted(true);
+            // setCompleted(true);
         }
     }
 
@@ -47,7 +47,7 @@ export default function MedicalInterview({ loaderData, params }: Route.Component
                     interviewId={interviewId}
                     initialMessage={loaderData.initialMessage}
                     responseEndHandler={responseEndHandler}
-                    effectHander={effectHander}
+                    effectHandler={effectHander}
                 />
             </div>
 
