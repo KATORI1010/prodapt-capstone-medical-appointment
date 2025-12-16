@@ -1,33 +1,10 @@
 import type { Route } from "../+types/root";
-import { Link } from "react-router";
+import { Link, useFetcher } from "react-router";
 
-import { ClipboardPlus } from 'lucide-react';
+import { ClipboardPlus, RefreshCcw } from 'lucide-react';
 import { Button } from "~/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "~/components/ui/table";
 
-const appintmentData = [
-    {
-        id: 3,
-        status: "Medical interview required",
-        first_name: "Hiroaki",
-        last_name: "Katori",
-        date: "2025-12-19 15:30:00"
-    },
-    {
-        id: 2,
-        status: "closed",
-        first_name: "Hiroaki",
-        last_name: "Katori",
-        date: "2025-12-02 15:30:00"
-    },
-    {
-        id: 1,
-        status: "closed",
-        first_name: "Hiroaki",
-        last_name: "Katori",
-        date: "2025-11-02 15:30:00"
-    },
-]
 
 export async function clientLoader({ request, params }: Route.ClientLoaderArgs) {
     const res = await fetch("/api/appointments");
@@ -35,7 +12,18 @@ export async function clientLoader({ request, params }: Route.ClientLoaderArgs) 
     return { appointments }
 }
 
+export async function clientAction({ request, params }: Route.ClientActionArgs) {
+    const formData = await request.formData();
+    const appointment_id = formData.get("appointment_id");
+    await fetch(`/api/appointments/${appointment_id}`, {
+        method: "PUT",
+        body: formData,
+    })
+}
+
 export default function Home({ loaderData, params }: Route.ComponentProps) {
+    const fetcher = useFetcher();
+
     return (
         <main className="w-full h-30 text-center">
             <div>
@@ -63,7 +51,11 @@ export default function Home({ loaderData, params }: Route.ComponentProps) {
                         <TableBody>
                             {loaderData.appointments.map(
                                 (appointment) =>
-                                    <TableRow key={appointment.id} className={appointment.status === "Medical interview required" ? "bg-yellow-200" : ""}>
+                                    <TableRow key={appointment.id} className={
+                                        appointment.status === "Medical interview required"
+                                            ? "bg-yellow-200"
+                                            : appointment.status === "Ready for medical examination"
+                                                ? "bg-blue-300" : ""}>
                                         <TableCell className="max-w-md truncate">
                                             {appointment.id}
                                         </TableCell>
@@ -88,6 +80,25 @@ export default function Home({ loaderData, params }: Route.ComponentProps) {
                                                     </Button>
                                                 </Link>
                                             }
+                                            {appointment.status === "Ready for medical examination" &&
+                                                <fetcher.Form method="post"
+                                                    onSubmit={(event) => {
+                                                        const response = confirm(
+                                                            `Do you reset the appointment ID "${appointment.id}"?`,
+                                                        );
+                                                        if (!response) {
+                                                            event.preventDefault();
+                                                        }
+                                                    }}
+                                                >
+                                                    <input name="appointment_id" type="hidden" value={appointment.id}></input>
+                                                    <input name="status" type="hidden" value="Medical interview required"></input>
+                                                    <Button type="submit" size="sm" className="cursor-pointer">
+                                                        <RefreshCcw />
+                                                        Reset for Demo
+                                                    </Button>
+                                                </fetcher.Form>
+                                            }
                                         </TableCell>
                                     </TableRow>
                             )}
@@ -95,7 +106,6 @@ export default function Home({ loaderData, params }: Route.ComponentProps) {
                     </Table>
                 </div>
             </div>
-            {/* <div className="rounded-2xl border max-w-3xl mx-auto p-8 my-8"><IntakeChat /></div> */}
         </main>
     )
 }

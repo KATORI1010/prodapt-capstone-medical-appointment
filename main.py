@@ -18,7 +18,12 @@ from openai import OpenAI
 
 from db import get_db, Session
 from models import Appointment, MedicalInterview
-from schemas import ReadAppointmentSchema, CreateMedicalInterview
+from schemas import (
+    CreateAppointmentSchema,
+    ReadAppointmentSchema,
+    UpdateAppointmentSchema,
+    CreateMedicalInterview,
+)
 from chatkit.server import StreamingResult
 from intake_chat.server import MyChatKitServer, MyRequestContext
 from intake_chat.store import MyChatKitStore
@@ -28,33 +33,31 @@ from config import settings
 
 app = FastAPI()
 
+# Create session key to connect Chatkit with OpenAI Visual Builder
+# Use only when using Visual Builder
+# WORKFLOW_ID = settings.WORKFLOW_ID
+# client = OpenAI(api_key=settings.OPENAI_API_KEY)
 
-WORKFLOW_ID = settings.WORKFLOW_ID
-client = OpenAI(api_key=settings.OPENAI_API_KEY)
+# class SessionReq(BaseModel):
+#     user: str | None = None
 
-
-class SessionReq(BaseModel):
-    user: str | None = None
-
-
-@app.post("/api/chatkit/session")
-def create_session(req: SessionReq):
-    user = req.user or "local-dev-user"
-    s = client.beta.chatkit.sessions.create(
-        user=user,
-        workflow={"id": WORKFLOW_ID},
-        # 必要なら expires_after なども後で調整可
-    )
-    return {"client_secret": s.client_secret}
+# @app.post("/api/chatkit/session")
+# def create_session(req: SessionReq):
+#     user = req.user or "local-dev-user"
+#     s = client.beta.chatkit.sessions.create(
+#         user=user,
+#         workflow={"id": WORKFLOW_ID},
+#     )
+#     return {"client_secret": s.client_secret}
 
 
 server = MyChatKitServer(store=MyChatKitStore())
 
 
+# Chatkit Endpoint
 @app.post("/chatkit")
 async def chatkit(request: Request, db: Session = Depends(get_db)):
     interview_id = request.headers.get("x-interview-id") or "anonymous"
-    print(interview_id)
     context = MyRequestContext(db=db, interview_id=int(interview_id))
 
     result = await server.process(await request.body(), context=context)
@@ -63,16 +66,11 @@ async def chatkit(request: Request, db: Session = Depends(get_db)):
     return Response(content=result.json, media_type="application/json")
 
 
-class AppointmentForm(BaseModel):
-    status: str = Field(...)
-    patient_id: int = Field(...)
-    date: datetime = Field(...)
-
-
-# Create Appointments
+# Create Appointment
 @app.post("/api/appointments")
 async def api_create_appointment(
-    appointment_form: Annotated[AppointmentForm, Form()], db: Session = Depends(get_db)
+    appointment_form: Annotated[CreateAppointmentSchema, Form()],
+    db: Session = Depends(get_db),
 ):
     db_appointment = Appointment(
         status=appointment_form.status,
@@ -86,12 +84,6 @@ async def api_create_appointment(
 
 
 # Read Appointments
-# @app.get("/api/appointments")
-# async def api_read_appointments(db: Session = Depends(get_db)):
-#     db_appointments = db.query(Appointment).order_by(desc(Appointment.date)).all()
-#     return db_appointments
-
-
 @app.get("/api/appointments", response_model=list[ReadAppointmentSchema])
 async def api_read_appointments(db: Session = Depends(get_db)):
     db_appointments = (
@@ -115,6 +107,27 @@ async def api_read_appointments(db: Session = Depends(get_db)):
     ]
 
 
+# Update Appointment
+@app.put("/api/appointments/{appointment_id}")
+async def api_update_appointment(
+    appointment_id: int,
+    appointment_form: Annotated[UpdateAppointmentSchema, Form()],
+    db: Session = Depends(get_db),
+):
+    db_appointment = db.get(Appointment, appointment_id)
+    if not db_appointment:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Appointment not found."
+        )
+    if appointment_form.status is not None:
+        db_appointment.status = appointment_form.status
+    if appointment_form.date is not None:
+        db_appointment.date = appointment_form.date
+    db.commit()
+    db.refresh(db_appointment)
+    return db_appointment
+
+
 # Create Medical Interviews
 @app.post("/api/medical_interviews")
 async def api_create_medical_interviews(
@@ -122,9 +135,13 @@ async def api_create_medical_interviews(
     db: Session = Depends(get_db),
 ):
     db_appointment = db.get(Appointment, medical_interview_form.appointment_id)
-    print(db_appointment.patient.first_name)
+    if not db_appointment:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Appointment not found."
+        )
 
     db_medical_interview = MedicalInterview(
+        status="draft",
         appointment_id=medical_interview_form.appointment_id,
         initial_consult=medical_interview_form.initial_consult,
         created_at=datetime.now(),

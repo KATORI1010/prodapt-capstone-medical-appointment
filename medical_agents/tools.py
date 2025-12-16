@@ -12,7 +12,7 @@ from chatkit.types import (
 from chatkit.widgets import WidgetTemplate
 
 from db import Session
-from models import MedicalInterview
+from models import Appointment, MedicalInterview
 from schemas import UpdateMedicalInterview
 from medical_agents.intake_schemas import IntakeForm, IntakeFormPatch
 
@@ -52,6 +52,17 @@ async def report_completion(ctx: RunContextWrapper[MyAgentContext]) -> None:
     """
     # ステータスメッセージの更新 (Update status message)
     await ctx.context.stream(ProgressUpdateEvent(text="Review passed."))
+
+    # MedicalInterviewとAppointmentテーブルのステータス更新
+    # (Update status of MedicalInterview and Appointment table)
+    db = ctx.context.request_context.db
+    interview_id = ctx.context.request_context.interview_id
+
+    db_medical_interview = db.get(MedicalInterview, interview_id)
+    db_medical_interview.status = "completed"
+    db_appointment = db.get(Appointment, db_medical_interview.appointment_id)
+    db_appointment.status = "Ready for medical examination"
+    db.commit()
 
     # ClientのonEffectフックへの連携 (Integration with the Client's onEffect hook)
     await ctx.context.stream(
@@ -162,6 +173,7 @@ async def update_intake_form(
             "form": obj.intake,
         },
     }
+
 
 # -----------------------------
 # The following tools are old. These are not used now.

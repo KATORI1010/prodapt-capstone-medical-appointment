@@ -29,7 +29,8 @@ class Patient(Base):
             name="gender",
             native_enum=True,
             validate_strings=True,
-        )
+        ),
+        nullable=False,
     )
     appointments = relationship(
         "Appointment", back_populates="patient", cascade="all, delete-orphan"
@@ -48,18 +49,25 @@ class Appointment(Base):
     )
 
 
+class InterviewStatus(str, enum.Enum):
+    DRAFT = "draft"
+    COMPLETED = "completed"
+
+
 class MedicalInterview(Base):
     __tablename__ = "medical_interviews"
     id = Column(Integer, primary_key=True)
+    status: Mapped[InterviewStatus] = mapped_column(
+        Enum(
+            InterviewStatus,
+            name="interview_status",
+            native_enum=True,
+            validate_strings=True,
+        ),
+        nullable=True,
+    )
     appointment_id = Column(Integer, ForeignKey("appointments.id"), nullable=False)
     initial_consult = Column(Text, nullable=True)
-    # initial_findings = Column(Text, nullable=True)
-    # visit_reason = Column(Text, nullable=True)
-    # symptoms = Column(Text, nullable=True)
-    # duration = Column(Text, nullable=True)
-    # severity = Column(Text, nullable=True)
-    # current_medications = Column(Text, nullable=True)
-    # allergies = Column(Text, nullable=True)
     intake = Column(JSONB, nullable=True, default={})
     created_at = Column(DateTime, nullable=True)
     appointment = relationship("Appointment", back_populates="medical_interviews")
