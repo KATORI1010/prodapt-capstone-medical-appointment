@@ -4,13 +4,16 @@ from pathlib import Path
 
 from agents import function_tool, RunContextWrapper
 from chatkit.agents import AgentContext
-from chatkit.types import ProgressUpdateEvent, ClientEffectEvent, ClosedStatus, WidgetItem
+from chatkit.types import (
+    ProgressUpdateEvent,
+    ClientEffectEvent,
+    ClosedStatus,
+)
 from chatkit.widgets import WidgetTemplate
 
 from db import Session
 from models import MedicalInterview
 from schemas import UpdateMedicalInterview
-
 from medical_agents.intake_schemas import IntakeForm, IntakeFormPatch
 
 
@@ -20,7 +23,6 @@ class MyRequestContext:
     interview_id: int
 
 
-# @dataclass
 class MyAgentContext(AgentContext):
     request_context: MyRequestContext
 
@@ -39,7 +41,7 @@ async def report_progress(ctx: RunContextWrapper[MyAgentContext], text: str) -> 
     Args:
     - text: The message to notify (**English Only**)
     """
-    # ステータスメッセージの更新
+    # ステータスメッセージの更新 (Update status message)
     await ctx.context.stream(ProgressUpdateEvent(text=text))
 
 
@@ -48,109 +50,38 @@ async def report_completion(ctx: RunContextWrapper[MyAgentContext]) -> None:
     """
     This function notifies the interview completion to user.
     """
-    # ステータスメッセージの更新
+    # ステータスメッセージの更新 (Update status message)
     await ctx.context.stream(ProgressUpdateEvent(text="Review passed."))
 
-    # ClientのonEffectフックへの連携
+    # ClientのonEffectフックへの連携 (Integration with the Client's onEffect hook)
     await ctx.context.stream(
         ClientEffectEvent(
             name="interview_completed",
             data={},
         )
     )
-    
-    # 完了を通知するWidgetを表示
+
+    # 完了を通知するWidgetを表示 (Display a widget to notify of completion)
     base_dir = Path(__file__).resolve().parent
     widget_path = base_dir / "widgets/completion_notification.widget"
     widget_template = WidgetTemplate.from_file(widget_path)
-    
-    widget = widget_template.build({
-        "title": "Medical interview completed",
-        "description": "Notify me when this item ships",
-        "buttonLabel": "Return to home",
-        "url": "/?status=complete",
-        })
+
+    widget = widget_template.build(
+        {
+            "title": "Medical interview completed",
+            "description": "Notify me when this item ships",
+            "buttonLabel": "Return to home",
+            "url": "/?status=complete",
+        }
+    )
     await ctx.context.stream_widget(widget)
 
-    # Threadのクローズ
+    # Threadのクローズ (Close the thread)
     thread = ctx.context.thread
     store = ctx.context.store
     request_context = ctx.context.request_context
     thread.status = ClosedStatus(reason="Medical interview completed.")
     await store.save_thread(thread, context=request_context)
-
-
-@function_tool
-def read_medical_interview(ctx: RunContextWrapper[MyAgentContext]) -> dict:
-    """
-    This function retrieves the medical interview form from the database
-    and returns its contents.
-    """
-    db = ctx.context.request_context.db
-    interview_id = ctx.context.request_context.interview_id
-
-    obj = db.get(MedicalInterview, interview_id)
-
-    return {
-        "ok": True,
-        "medical_interview": {
-            "id": obj.id,
-            "appointment_id": obj.appointment_id,
-            "initial_consult": obj.initial_consult,
-            "initial_findings": obj.initial_findings,
-            "visit_reason": obj.visit_reason,
-            "symptoms": obj.symptoms,
-            "duration": obj.duration,
-            "severity": obj.severity,
-            "current_medications": obj.current_medications,
-            "allergies": obj.allergies,
-        },
-    }
-
-
-@function_tool
-async def update_medical_interview(
-    ctx: RunContextWrapper[MyAgentContext],
-    content: UpdateMedicalInterview,
-) -> dict:
-    """
-    This function updates the questionnaire in the database.
-    It updates only the items entered as arguments.
-
-    Args:
-    - content: UpdateMedicalInterview
-    """
-    await ctx.context.stream(ProgressUpdateEvent(text="Updating DB Data…"))
-
-    db = ctx.context.request_context.db
-    interview_id = ctx.context.request_context.interview_id
-
-    obj = db.get(MedicalInterview, interview_id)
-    if obj is None:
-        return {"ok": False, "error": "MedicalInterview not found"}
-
-    updates = content.model_dump(exclude_unset=True)
-    for k, v in updates.items():
-        setattr(obj, k, v)
-
-    db.commit()
-    db.refresh(obj)
-
-    return {
-        "ok": True,
-        "medical_interview": {
-            "id": obj.id,
-            "appointment_id": obj.appointment_id,
-            "initial_consult": obj.initial_consult,
-            "initial_findings": obj.initial_findings,
-            "visit_reason": obj.visit_reason,
-            "symptoms": obj.symptoms,
-            "duration": obj.duration,
-            "severity": obj.severity,
-            "current_medications": obj.current_medications,
-            "allergies": obj.allergies,
-        },
-    }
 
 
 @function_tool
@@ -231,3 +162,79 @@ async def update_intake_form(
             "form": obj.intake,
         },
     }
+
+# -----------------------------
+# The following tools are old. These are not used now.
+# -----------------------------
+#
+# @function_tool
+# def read_medical_interview(ctx: RunContextWrapper[MyAgentContext]) -> dict:
+#     """
+#     This function retrieves the medical interview form from the database
+#     and returns its contents.
+#     """
+#     db = ctx.context.request_context.db
+#     interview_id = ctx.context.request_context.interview_id
+
+#     obj = db.get(MedicalInterview, interview_id)
+
+#     return {
+#         "ok": True,
+#         "medical_interview": {
+#             "id": obj.id,
+#             "appointment_id": obj.appointment_id,
+#             "initial_consult": obj.initial_consult,
+#             "initial_findings": obj.initial_findings,
+#             "visit_reason": obj.visit_reason,
+#             "symptoms": obj.symptoms,
+#             "duration": obj.duration,
+#             "severity": obj.severity,
+#             "current_medications": obj.current_medications,
+#             "allergies": obj.allergies,
+#         },
+#     }
+
+
+# @function_tool
+# async def update_medical_interview(
+#     ctx: RunContextWrapper[MyAgentContext],
+#     content: UpdateMedicalInterview,
+# ) -> dict:
+#     """
+#     This function updates the questionnaire in the database.
+#     It updates only the items entered as arguments.
+
+#     Args:
+#     - content: UpdateMedicalInterview
+#     """
+#     await ctx.context.stream(ProgressUpdateEvent(text="Updating DB Data…"))
+
+#     db = ctx.context.request_context.db
+#     interview_id = ctx.context.request_context.interview_id
+
+#     obj = db.get(MedicalInterview, interview_id)
+#     if obj is None:
+#         return {"ok": False, "error": "MedicalInterview not found"}
+
+#     updates = content.model_dump(exclude_unset=True)
+#     for k, v in updates.items():
+#         setattr(obj, k, v)
+
+#     db.commit()
+#     db.refresh(obj)
+
+#     return {
+#         "ok": True,
+#         "medical_interview": {
+#             "id": obj.id,
+#             "appointment_id": obj.appointment_id,
+#             "initial_consult": obj.initial_consult,
+#             "initial_findings": obj.initial_findings,
+#             "visit_reason": obj.visit_reason,
+#             "symptoms": obj.symptoms,
+#             "duration": obj.duration,
+#             "severity": obj.severity,
+#             "current_medications": obj.current_medications,
+#             "allergies": obj.allergies,
+#         },
+#     }

@@ -170,36 +170,7 @@ Patient → Intake Agent
 
 
 ## Runtime Architecture
-
-```mermaid
-flowchart LR
-  subgraph Browser
-    UI[React App]
-    CK[ChatKit React Component]
-    RP[Right Pane: Intake JSON Preview / Summary]
-  end
-
-  subgraph Server
-    API["ChatKitServer.respond()"]
-    AG[Agents SDK Runner]
-    IA[Intake Agent]
-    RV[Reviewer Agent]
-    TL[Tools: read/update_intake_form, report_completion]
-  end
-
-  subgraph DB
-    PG[(PostgreSQL)]
-    JSONB[IntakeForm JSONB Column]
-  end
-
-  CK -->|"/chatkit (stream)"| API
-  API --> AG --> IA
-  IA --> TL --> PG --> JSONB
-  AG --> RV
-  RV -->|PASS/FAIL| AG
-  API -->|events: message/progress/effect/threadUpdated| CK
-  CK --> RP
-```
+![alt text](SystemDiagram.drawio.png)
 
 ## Multi-turn Conversation (Chat) Sequence Diagram
 ```mermaid
