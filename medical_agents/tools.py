@@ -1,9 +1,10 @@
 from dataclasses import dataclass
 from datetime import datetime
+from pathlib import Path
 
 from agents import function_tool, RunContextWrapper
 from chatkit.agents import AgentContext
-from chatkit.types import ProgressUpdateEvent, ClientEffectEvent, ClosedStatus
+from chatkit.types import ProgressUpdateEvent, ClientEffectEvent, ClosedStatus, WidgetItem
 
 from db import Session
 from models import MedicalInterview
@@ -21,6 +22,12 @@ class MyRequestContext:
 # @dataclass
 class MyAgentContext(AgentContext):
     request_context: MyRequestContext
+
+
+def load_prompt_md(relative_path: str) -> str:
+    base_dir = Path(__file__).resolve().parent
+    prompt_path = base_dir / relative_path
+    return Path(prompt_path).read_text(encoding="utf-8-sig")
 
 
 @function_tool
@@ -48,6 +55,19 @@ async def report_completion(ctx: RunContextWrapper[MyAgentContext]) -> None:
         ClientEffectEvent(
             name="interview_completed",
             data={},
+        )
+    )
+    
+    await ctx.context.stream(
+        WidgetItem(
+            id="completion_widget",
+            widget={
+                "type": "buttons",
+                "title": "Completed",
+                "buttons": [
+                    {"label": "Back to Home", "action": {"type": "effect", "name": "go_home"}}
+                ],
+            },
         )
     )
 

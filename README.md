@@ -1,9 +1,203 @@
-Template to deploy a simple Python FastAPI project to Render
+# Medical Interview AI System
 
-## Local Dev
-```bash
-> python -m venv .venv
-> source .venv/bin/activate
-> pip install -r requirements.txt
-> fastapi dev main.py
+## Problem statement
+
+Clinics often collect pre-visit medical intake information manually, leading to incomplete or inconsistent data.
+Patients may provide vague or partial descriptions of their symptoms, medications, or allergies, requiring clinicians to repeat basic questioning during the visit.
+This system addresses the problem by using a conversational AI agent that gathers, clarifies, and validates intake information through multi-turn dialogue, producing a structured summary ready for clinical use.
+
+
+## Overview
+
+This project provides an **AI-powered medical intake system** that collects patient information **before a clinic visit** through a natural, human-like conversation.
+
+It is designed to:
+- Ask follow-up questions when information is missing
+- Confirm that nothing important was missed
+- Produce a structured intake form for clinicians
+- Validate intake quality before completion
+
+> ⚠️ This system does **not** provide diagnosis or medical advice.
+
+
+## High-Level Architecture
+```mermaid
+graph TD
+  P[Patient] -->|Chat| IA[Medical Interview Agent<br>- Conversational<br>- Human-like asking<br>- Fills intake form]
+  IA -->|update_intake_form| DB[(Intake Form / DB)]
+  IA -->|call agent as tool| RV
+  DB -->|read_intake_form| RV[Reviewer Agent<br>- Quality check<br>- Pass / Fail]
+  RV -->|Pass| DONE[Interview Completed]
+  RV -->|Fail: actionable feedback| IA
 ```
+
+## Medical Interview Agent
+
+### Role
+
+The Medical Interview Agent conducts a **multi-turn interview** with the patient and fills out the intake form step by step.
+
+It behaves similarly to a trained human interviewer:
+- Uses empathetic language
+- Asks only **1–2 questions at a time**
+- Confirms unclear answers
+- Explicitly checks “anything else?”
+
+---
+
+### Required Intake Information
+
+The agent must collect **all six categories**:
+
+```
+1. Reason for visit
+2. Symptoms
+3. Duration / onset
+4. Severity (0–10 or daily impact)
+5. Current medications
+6. Allergies
+```
+
+The interview **cannot finish** until all six are sufficiently covered.
+
+---
+
+### Interview Flow (Phase-Based)
+
+```
+Phase A ──► Chief Complaint
+Phase B ──► Symptom Details (OPQRST)
+Phase C ──► Related Symptoms
+Phase D ──► “Anything else?” Coverage Check
+Phase E ──► Summary & Patient Confirmation
+Phase F ──► Review & Completion
+```
+
+---
+
+### Symptom Deep Dive ([OPQRST](https://www.osmosis.org/answers/opqrst-pain-assessment-mnemonic))
+
+For key symptoms, the agent gradually collects:
+
+```
+O – Onset        (When did it start?)
+P – Provocation  (What makes it better/worse?)
+Q – Quality      (How does it feel?)
+R – Region       (Where is it?)
+S – Severity     (0–10 or life impact)
+T – Timing       (Constant? Improving? Worsening?)
+```
+
+Not all details are required at once — missing parts are asked later.
+
+---
+
+### Coverage Confirmation (Critical)
+
+The following are **not considered complete** until explicitly confirmed:
+
+```
+Symptoms     → “No other symptoms”
+Medications  → “No other medications (including OTC/supplements)”
+Allergies    → “No other allergies”
+```
+
+This mirrors how human clinicians avoid missing secondary issues.
+
+---
+
+## Reviewer Agent (Quality Gate)
+
+### Role
+
+The Reviewer Agent checks whether the intake is **good enough for a clinical visit**.
+
+It verifies the following points:
+- Are all categories present?
+- Any clear contradictions?
+- Coverage confirmed (“no more”)?
+
+If **any check fails**, the reviewer returns **specific feedback** (e.g., “duration unclear”, “medications not fully confirmed”).
+
+---
+
+## Example Feedback Loop
+
+```
+Patient → Intake Agent
+        → Intake Form
+        → Reviewer Agent
+        → "Medication coverage not confirmed"
+        → Intake Agent asks follow-up
+        → Updated Intake Form
+        → Reviewer Passes
+```
+
+---
+
+## Tech Stack
+
+### Frontend
+- **React + TypeScript**
+- **Routing + Framework:** React Router
+- **Chat UI:** [`@openai/chatkit-react`](https://platform.openai.com/docs/guides/chatkit)
+- **Styling:** Tailwind CSS
+- **UI Components:** shadcn/ui
+
+### Backend
+- **Python**
+- **API framework:** FastAPI
+- **Chat server:** [OpenAI ChatKit Python SDK](https://openai.github.io/chatkit-python/)
+- **Agent framework:** [OpenAI Agents SDK](https://openai.github.io/openai-agents-python/)
+- **Validation:** Pydantic
+- **ORM:** SQLAlchemy
+
+### Database
+- **PostgreSQL**
+- **Primary storage:** JSONB column for intake form payload (prototype-friendly)
+
+### LLMOps
+- **Tracing:** [Braintrust](https://www.braintrust.dev/)
+
+
+
+## Why use Chatkit?
+
+
+
+
+## How to store intake form
+
+
+## Runtime Architecture
+
+```mermaid
+flowchart LR
+  subgraph Browser
+    UI[React App]
+    CK[ChatKit React Component]
+    RP[Right Pane: Intake JSON Preview / Summary]
+  end
+
+  subgraph Server
+    API["ChatKitServer.respond()"]
+    AG[Agents SDK Runner]
+    IA[Intake Agent]
+    RV[Reviewer Agent]
+    TL[Tools: read/update_intake_form, report_completion]
+  end
+
+  subgraph DB
+    PG[(PostgreSQL)]
+    JSONB[IntakeForm JSONB Column]
+  end
+
+  CK -->|"/chatkit (stream)"| API
+  API --> AG --> IA
+  IA --> TL --> PG --> JSONB
+  AG --> RV
+  RV -->|PASS/FAIL| AG
+  API -->|events: message/progress/effect/threadUpdated| CK
+  CK --> RP
+```
+
