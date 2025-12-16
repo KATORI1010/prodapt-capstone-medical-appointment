@@ -201,3 +201,36 @@ flowchart LR
   CK --> RP
 ```
 
+## Multi-turn Conversation (Chat) Sequence Diagram
+```mermaid
+sequenceDiagram
+  autonumber
+  participant U as User (Browser)
+  participant FE as Frontend (React Router)
+  participant CK as ChatKit UI (@openai/chatkit-react)
+  participant API as FastAPI (POST /chatkit)
+  participant S as MyChatKitServer.respond()
+  participant ST as MyChatKitStore (memory)
+  participant DB as PostgreSQL (MedicalInterview.intake)
+  participant AG as Agents SDK (Runner.run_streamed)
+  participant OAI as OpenAI API
+
+  U->>FE: Navigate UI (medical_interview route)
+  FE->>API: GET /api/medical_interviews/{id}
+  API->>DB: SELECT medical_interviews
+  DB-->>API: Return intake, etc.
+  API-->>FE: JSON response
+
+  U->>CK: Send message
+  CK->>API: POST /chatkit (with x-interview-id header)
+  API->>S: server.process(body, context)
+  S->>DB: Load intake form by interview_id
+  S->>ST: load_thread_items(recent history)
+  S->>AG: Runner.run_streamed(agent, input_items)
+  AG->>OAI: LLM inference (streaming)
+  AG->>DB: (tool) Update intake via update_intake_form, etc.
+  AG-->>S: Stream events (progress/widget/effect)
+  S-->>CK: Stream via SSE (text/event-stream)
+  CK-->>FE: Update UI (e.g., re-fetch intake in side panel)
+```
+
