@@ -1,6 +1,7 @@
 // IntakeChat.tsx
 import { ChatKit, useChatKit } from "@openai/chatkit-react";
 import type { UseChatKitOptions } from "@openai/chatkit-react";
+import { useNavigate } from "react-router";
 
 type IntakeChatProps = {
     interviewId: string;
@@ -14,6 +15,8 @@ type IntakeChatProps = {
 
 
 export function IntakeChat({ interviewId, initialMessage, responseEndHandler, effectHandler }: IntakeChatProps) {
+    const navigate = useNavigate();
+
     const options: UseChatKitOptions = {
         api: {
             url: "/chatkit",
@@ -50,6 +53,22 @@ export function IntakeChat({ interviewId, initialMessage, responseEndHandler, ef
         // チャットのレスポンス終了時に画面のデータ更新を行う
         onResponseEnd: responseEndHandler,
         onEffect: effectHandler,
+        widgets: {
+            onAction: async (action) => {
+                if (action.type === "navigate") {
+                    const url = (action.payload?.url as string) ?? "/";
+
+                    // SPA internal navigation
+                    if (url.startsWith("/")) {
+                        navigate(url);
+                        return;
+                    }
+
+                    // External link
+                    window.open(url, "_blank", "noopener,noreferrer");
+                }
+            },
+        },
         theme: {
             colorScheme: 'light',
             radius: 'pill',

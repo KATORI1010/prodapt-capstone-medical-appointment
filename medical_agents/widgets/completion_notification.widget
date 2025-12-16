@@ -1,0 +1,97 @@
+{
+  "version": "1.0",
+  "name": "Completion Notification",
+  "template": "{\"type\":\"Card\",\"size\":\"full\",\"background\":\"#ffffff\",\"theme\":\"light\",\"children\":[{\"type\":\"Col\",\"align\":\"center\",\"gap\":4,\"padding\":4,\"children\":[{\"type\":\"Box\",\"background\":\"green-400\",\"radius\":\"full\",\"padding\":3,\"children\":[{\"type\":\"Icon\",\"name\":\"check\",\"size\":\"3xl\",\"color\":\"white\"}]},{\"type\":\"Col\",\"align\":\"center\",\"gap\":1,\"children\":[{\"type\":\"Title\",\"value\":{{ (title) | tojson }}},{\"type\":\"Text\",\"value\":{{ (description) | tojson }},\"color\":\"secondary\"}]}]},{\"type\":\"Row\",\"children\":[{\"type\":\"Spacer\"},{\"type\":\"Button\",\"label\":{{ (buttonLabel) | tojson }},\"iconStart\":\"check\",\"onClickAction\":{\"type\":\"navigate\",\"handler\":\"client\",\"payload\":{\"url\":{{ (url) | tojson }}}}}]}]}",
+  "jsonSchema": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "properties": {
+      "title": {
+        "type": "string"
+      },
+      "description": {
+        "type": "string"
+      },
+      "buttonLabel": {
+        "type": "string"
+      },
+      "url": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "title",
+      "description",
+      "buttonLabel",
+      "url"
+    ],
+    "additionalProperties": false
+  },
+  "outputJsonPreview": {
+    "type": "Card",
+    "size": "full",
+    "background": "#ffffff",
+    "theme": "light",
+    "children": [
+      {
+        "type": "Col",
+        "align": "center",
+        "gap": 4,
+        "padding": 4,
+        "children": [
+          {
+            "type": "Box",
+            "background": "green-400",
+            "radius": "full",
+            "padding": 3,
+            "children": [
+              {
+                "type": "Icon",
+                "name": "check",
+                "size": "3xl",
+                "color": "white"
+              }
+            ]
+          },
+          {
+            "type": "Col",
+            "align": "center",
+            "gap": 1,
+            "children": [
+              {
+                "type": "Title",
+                "value": "Medical Interview Completed"
+              },
+              {
+                "type": "Text",
+                "value": "Thank you for your coorpolation",
+                "color": "secondary"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "type": "Row",
+        "children": [
+          {
+            "type": "Spacer"
+          },
+          {
+            "type": "Button",
+            "label": "Return to home",
+            "iconStart": "check",
+            "onClickAction": {
+              "type": "navigate",
+              "handler": "client",
+              "payload": {
+                "url": "/"
+              }
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "encodedWidget": "eyJpZCI6IndpZ19sNzUyam4yeSIsIm5hbWUiOiJDb21wbGV0aW9uIE5vdGlmaWNhdGlvbiIsInZpZXciOiI8Q2FyZCBzaXplPVwiZnVsbFwiIGJhY2tncm91bmQ9XCIjZmZmZmZmXCIgdGhlbWU9XCJsaWdodFwiPlxuICA8Q29sIGFsaWduPVwiY2VudGVyXCIgZ2FwPXs0fSBwYWRkaW5nPXs0fT5cbiAgICA8Qm94IGJhY2tncm91bmQ9XCJncmVlbi00MDBcIiByYWRpdXM9XCJmdWxsXCIgcGFkZGluZz17M30-XG4gICAgICA8SWNvbiBuYW1lPVwiY2hlY2tcIiBzaXplPVwiM3hsXCIgY29sb3I9XCJ3aGl0ZVwiIC8-XG4gICAgPC9Cb3g-XG4gICAgPENvbCBhbGlnbj1cImNlbnRlclwiIGdhcD17MX0-XG4gICAgICA8VGl0bGUgdmFsdWU9e3RpdGxlfSAvPlxuICAgICAgPFRleHQgdmFsdWU9e2Rlc2NyaXB0aW9ufSBjb2xvcj1cInNlY29uZGFyeVwiIC8-XG4gICAgPC9Db2w-XG4gIDwvQ29sPlxuXG4gIDxSb3c-XG4gICAgPFNwYWNlciAvPlxuICAgIDxCdXR0b25cbiAgICAgIGxhYmVsPXtidXR0b25MYWJlbH1cbiAgICAgIGljb25TdGFydD1cImNoZWNrXCJcbiAgICAgIC8vIGljb25FbmQ9XCJleHRlcm5hbC1saW5rXCJcbiAgICAgIG9uQ2xpY2tBY3Rpb249e3tcbiAgICAgICAgdHlwZTogXCJuYXZpZ2F0ZVwiLFxuICAgICAgICBoYW5kbGVyOiBcImNsaWVudFwiLFxuICAgICAgICBwYXlsb2FkOiB7IHVybCB9LFxuICAgICAgfX1cbiAgICAvPlxuICA8L1Jvdz5cbjwvQ2FyZD4iLCJkZWZhdWx0U3RhdGUiOnsidGl0bGUiOiJNZWRpY2FsIEludGVydmlldyBDb21wbGV0ZWQiLCJkZXNjcmlwdGlvbiI6IlRoYW5rIHlvdSBmb3IgeW91ciBjb29ycG9sYXRpb24iLCJidXR0b25MYWJlbCI6IlJldHVybiB0byBob21lIiwidXJsIjoiLyJ9LCJzY2hlbWFNb2RlIjoiem9kIiwianNvblNjaGVtYSI6eyJ0eXBlIjoib2JqZWN0IiwicHJvcGVydGllcyI6eyJ0aXRsZSI6eyJ0eXBlIjoic3RyaW5nIn19LCJyZXF1aXJlZCI6WyJ0aXRsZSJdLCJhZGRpdGlvbmFsUHJvcGVydGllcyI6ZmFsc2V9LCJzY2hlbWEiOiJpbXBvcnQgeyB6IH0gZnJvbSBcInpvZFwiXG5cbmNvbnN0IFdpZGdldFN0YXRlID0gei5vYmplY3Qoe1xuICB0aXRsZTogei5zdHJpbmcoKSxcbiAgZGVzY3JpcHRpb246IHouc3RyaW5nKCksXG4gIGJ1dHRvbkxhYmVsOiB6LnN0cmluZygpLFxuICB1cmw6IHouc3RyaW5nKCksXG59KVxuXG5leHBvcnQgZGVmYXVsdCBXaWRnZXRTdGF0ZSIsInN0YXRlcyI6W10sInNjaGVtYVZhbGlkaXR5IjoidmFsaWQiLCJ2aWV3VmFsaWRpdHkiOiJ2YWxpZCIsImRlZmF1bHRTdGF0ZVZhbGlkaXR5IjoidmFsaWQifQ"
+}

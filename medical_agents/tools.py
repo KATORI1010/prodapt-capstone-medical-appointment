@@ -5,6 +5,7 @@ from pathlib import Path
 from agents import function_tool, RunContextWrapper
 from chatkit.agents import AgentContext
 from chatkit.types import ProgressUpdateEvent, ClientEffectEvent, ClosedStatus, WidgetItem
+from chatkit.widgets import WidgetTemplate
 
 from db import Session
 from models import MedicalInterview
@@ -36,7 +37,7 @@ async def report_progress(ctx: RunContextWrapper[MyAgentContext], text: str) -> 
     This function notifies the process to user.
 
     Args:
-    - text: The message to notify
+    - text: The message to notify (**English Only**)
     """
     # ステータスメッセージの更新
     await ctx.context.stream(ProgressUpdateEvent(text=text))
@@ -58,18 +59,18 @@ async def report_completion(ctx: RunContextWrapper[MyAgentContext]) -> None:
         )
     )
     
-    await ctx.context.stream(
-        WidgetItem(
-            id="completion_widget",
-            widget={
-                "type": "buttons",
-                "title": "Completed",
-                "buttons": [
-                    {"label": "Back to Home", "action": {"type": "effect", "name": "go_home"}}
-                ],
-            },
-        )
-    )
+    # 完了を通知するWidgetを表示
+    base_dir = Path(__file__).resolve().parent
+    widget_path = base_dir / "widgets/completion_notification.widget"
+    widget_template = WidgetTemplate.from_file(widget_path)
+    
+    widget = widget_template.build({
+        "title": "Medical interview completed",
+        "description": "Notify me when this item ships",
+        "buttonLabel": "Return to home",
+        "url": "/?status=complete",
+        })
+    await ctx.context.stream_widget(widget)
 
     # Threadのクローズ
     thread = ctx.context.thread
@@ -220,7 +221,7 @@ async def update_intake_form(
     db.commit()
     db.refresh(obj)
 
-    await ctx.context.stream(ProgressUpdateEvent(text="Update complete."))
+    await ctx.context.stream(ProgressUpdateEvent(text="Update complete: Intake form"))
 
     return {
         "ok": True,
