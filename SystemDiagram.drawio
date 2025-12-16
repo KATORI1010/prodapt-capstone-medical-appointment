@@ -1,0 +1,63 @@
+<mxfile host="app.diagrams.net" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36" version="29.2.7">
+  <diagram name="Page-1" id="3uwD4tOHzua36exw4QuJ">
+    <mxGraphModel dx="827" dy="581" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="UtvgzLeIHrT180jhLTfj-1" parent="1" style="rounded=0;whiteSpace=wrap;html=1;verticalAlign=top;fillColor=#dae8fc;strokeColor=#000000;" value="Frontend&lt;br&gt;(React Router)" vertex="1">
+          <mxGeometry height="200" width="160" x="240" y="120" as="geometry" />
+        </mxCell>
+        <mxCell id="UtvgzLeIHrT180jhLTfj-20" edge="1" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="UtvgzLeIHrT180jhLTfj-1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="160" y="220" as="sourcePoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="UtvgzLeIHrT180jhLTfj-2" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;" value="Patient" vertex="1">
+          <mxGeometry height="60" width="30" x="120" y="190" as="geometry" />
+        </mxCell>
+        <mxCell id="UtvgzLeIHrT180jhLTfj-7" parent="1" style="rounded=0;whiteSpace=wrap;html=1;verticalAlign=top;fillColor=#d5e8d4;strokeColor=#000000;fontStyle=0" value="Backend&lt;br&gt;(FastAPI)" vertex="1">
+          <mxGeometry height="200" width="560" x="440" y="120" as="geometry" />
+        </mxCell>
+        <mxCell id="UtvgzLeIHrT180jhLTfj-6" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#000000;" value="Chatkit&lt;br&gt;Server" vertex="1">
+          <mxGeometry height="90" width="120" x="480" y="205" as="geometry" />
+        </mxCell>
+        <mxCell id="UtvgzLeIHrT180jhLTfj-8" parent="1" style="rounded=0;whiteSpace=wrap;html=1;verticalAlign=top;fillColor=#f8cecc;strokeColor=default;" value="OpenAI Agents SDK" vertex="1">
+          <mxGeometry height="120" width="340" x="640" y="180" as="geometry" />
+        </mxCell>
+        <mxCell id="UtvgzLeIHrT180jhLTfj-10" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="Review Agent" vertex="1">
+          <mxGeometry height="60" width="140" x="820" y="220" as="geometry" />
+        </mxCell>
+        <mxCell id="UtvgzLeIHrT180jhLTfj-11" parent="1" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#EEEEEE;" value="Database&lt;div&gt;(PostgreSQL)&lt;/div&gt;" vertex="1">
+          <mxGeometry height="80" width="340" x="640" y="380" as="geometry" />
+        </mxCell>
+        <mxCell id="UtvgzLeIHrT180jhLTfj-13" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="Medical Interview&lt;br&gt;Agent" vertex="1">
+          <mxGeometry height="60" width="140" x="660" y="220" as="geometry" />
+        </mxCell>
+        <mxCell id="UtvgzLeIHrT180jhLTfj-14" edge="1" parent="1" source="UtvgzLeIHrT180jhLTfj-6" style="endArrow=classic;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="UtvgzLeIHrT180jhLTfj-13" value="">
+          <mxGeometry height="50" relative="1" width="50" as="geometry">
+            <mxPoint x="630" y="320" as="sourcePoint" />
+            <mxPoint x="680" y="270" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="UtvgzLeIHrT180jhLTfj-17" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#000000;" value="Chatkit&lt;br&gt;react-component" vertex="1">
+          <mxGeometry height="90" width="120" x="260" y="205" as="geometry" />
+        </mxCell>
+        <mxCell id="UtvgzLeIHrT180jhLTfj-18" edge="1" parent="1" source="UtvgzLeIHrT180jhLTfj-17" style="endArrow=classic;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="UtvgzLeIHrT180jhLTfj-6" value="">
+          <mxGeometry height="50" relative="1" width="50" as="geometry">
+            <mxPoint x="380" y="320" as="sourcePoint" />
+            <mxPoint x="440" y="320" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="UtvgzLeIHrT180jhLTfj-21" edge="1" parent="1" source="UtvgzLeIHrT180jhLTfj-13" style="endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.265;entryY=0.021;entryDx=0;entryDy=0;entryPerimeter=0;" target="UtvgzLeIHrT180jhLTfj-11" value="">
+          <mxGeometry height="50" relative="1" width="50" as="geometry">
+            <mxPoint x="690" y="350" as="sourcePoint" />
+            <mxPoint x="750" y="350" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="UtvgzLeIHrT180jhLTfj-22" parent="1" style="ellipse;shape=cloud;whiteSpace=wrap;html=1;fillColor=#EEEEEE;" value="Braintrust" vertex="1">
+          <mxGeometry height="80" width="160" x="800" y="20" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

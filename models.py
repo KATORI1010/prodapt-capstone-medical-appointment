@@ -63,13 +63,3 @@ class MedicalInterview(Base):
     created_at = Column(DateTime, nullable=True)
     intake = Column(JSONB, nullable=True, default={})
     appointment = relationship("Appointment", back_populates="medical_interviews")
-
-
-# class JobApplicationAIEvaluation(Base):
-#     __tablename__ = "job_application_ai_evaluations"
-#     id = Column(Integer, primary_key=True)
-#     job_application_id = Column(
-#         Integer, ForeignKey("job_applications.id"), nullable=False
-#     )
-#     overall_score = Column(Integer, nullable=False)
-#     evaluation = Column(JSONB, nullable=False)

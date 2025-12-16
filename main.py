@@ -1,40 +1,24 @@
 import os
 from typing import Annotated
-import string
-import random
 from datetime import datetime
-from dataclasses import dataclass
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field
 from fastapi import (
     FastAPI,
     Request,
     Response,
     HTTPException,
-    UploadFile,
     Form,
     status,
-    BackgroundTasks,
     Depends,
 )
-from fastapi.staticfiles import StaticFiles
-from fastapi.responses import HTMLResponse, FileResponse, StreamingResponse
-from fastapi.templating import Jinja2Templates
-from sqlalchemy import text, desc
-
-# from supabase import create_client, Client
+from fastapi.responses import FileResponse, StreamingResponse
+from sqlalchemy import desc
 from openai import OpenAI
 
-from db import get_db_session, get_db, Session
+from db import get_db, Session
 from models import Appointment, MedicalInterview
 from schemas import ReadAppointmentSchema, CreateMedicalInterview
-from auth import (
-    authenticate_admin,
-    is_admin,
-    delete_admin_session,
-    AdminAuthzMiddleware,
-    AdminSessionMiddleware,
-)
 from chatkit.server import StreamingResult
 from intake_chat.server import MyChatKitServer, MyRequestContext
 from intake_chat.store import MyChatKitStore
@@ -43,8 +27,6 @@ from intake_chat.store import MyChatKitStore
 from config import settings
 
 app = FastAPI()
-app.add_middleware(AdminAuthzMiddleware)
-app.add_middleware(AdminSessionMiddleware)
 
 
 WORKFLOW_ID = settings.WORKFLOW_ID
@@ -141,17 +123,19 @@ async def api_create_medical_interviews(
 ):
     db_appointment = db.get(Appointment, medical_interview_form.appointment_id)
     print(db_appointment.patient.first_name)
-    
+
     db_medical_interview = MedicalInterview(
         appointment_id=medical_interview_form.appointment_id,
         initial_consult=medical_interview_form.initial_consult,
         created_at=datetime.now(),
         intake={
-            "full_name": " ".join([db_appointment.patient.first_name, db_appointment.patient.last_name]),
+            "full_name": " ".join(
+                [db_appointment.patient.first_name, db_appointment.patient.last_name]
+            ),
             "age_years": db_appointment.patient.age,
             "sex": db_appointment.patient.gender,
-            "initial_patient_message": medical_interview_form.initial_consult
-        }
+            "initial_patient_message": medical_interview_form.initial_consult,
+        },
     )
     db.add(db_medical_interview)
     db.commit()
@@ -163,7 +147,7 @@ async def api_create_medical_interviews(
 @app.get("/api/medical_interviews")
 async def api_read_medical_interviews(
     appointment_id: int, db: Session = Depends(get_db)
-):    
+):
     db_medical_interviews = (
         db.query(MedicalInterview)
         .filter(MedicalInterview.appointment_id == appointment_id)
