@@ -319,6 +319,10 @@ npm run dev
 #### 11. Insert dummy data into the database
 Insert dummy data into patients and appointments table.
 
+``` python
+python inject_dummy_data.py
+```
+
 ------------------------------------------------------------------------
 
 ### Access the Application
