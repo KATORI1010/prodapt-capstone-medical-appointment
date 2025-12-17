@@ -160,15 +160,6 @@ Patient → Intake Agent
 - **Tracing:** [Braintrust](https://www.braintrust.dev/)
 
 
-
-## Why use Chatkit?
-
-
-
-
-## How to store intake form
-
-
 ## Runtime Architecture
 ![alt text](SystemDiagram.drawio.png)
 
@@ -205,3 +196,11 @@ sequenceDiagram
   CK-->>FE: Update UI (e.g., re-fetch intake in side panel)
 ```
 
+## Why use Chatkit?
+This prototype focuses on quickly validating an AI agent–based chat experience, and ChatKit was selected for the following reasons:
+
+- **Reduced effort for chat UI implementation**<br>
+Core chat features such as message input, conversation history, and streaming responses are provided out of the box, allowing us to focus on validating agent logic rather than building the UI from scratch.
+
+- **Strong compatibility with the OpenAI Agents SDK**<br>
+ChatKit aligns well with the design principles of the OpenAI Agents SDK, making it easier to build, iterate on, and extend agent-based architectures in the future.
