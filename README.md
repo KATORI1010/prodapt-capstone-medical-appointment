@@ -204,3 +204,125 @@ Core chat features such as message input, conversation history, and streaming re
 
 - **Strong compatibility with the OpenAI Agents SDK**<br>
 ChatKit aligns well with the design principles of the OpenAI Agents SDK, making it easier to build, iterate on, and extend agent-based architectures in the future.
+
+---
+## Development Setup
+
+This section describes how to set up and run the application locally for
+development.
+
+------------------------------------------------------------------------
+
+### Prerequisites
+
+-   Python 3.10+
+-   Node.js 18+
+-   npm
+-   PostgreSQL
+
+------------------------------------------------------------------------
+
+### Backend Setup (FastAPI)
+
+#### 1. Create a Python virtual environment
+
+``` bash
+python -m venv .venv
+```
+
+#### 2. Activate the virtual environment
+
+-   **Windows Command Prompt**
+
+``` cmd
+.venv\Scripts\activate.bat
+```
+
+-   **macOS / Linux**
+
+``` bash
+source .venv/bin/activate
+```
+
+#### 3. Install Python dependencies
+
+``` bash
+pip install -r requirements.txt
+```
+
+------------------------------------------------------------------------
+
+### Database Setup (PostgreSQL)
+
+#### 4. Prepare PostgreSQL
+
+Make sure PostgreSQL is installed and running locally.
+
+#### 5. Create a development database
+
+``` sql
+CREATE DATABASE medical_appointment_dev;
+```
+
+------------------------------------------------------------------------
+
+### Environment Configuration
+
+#### 6. Add environment variables
+
+Create a `.env` file in the project root and define the required
+environment variables.
+
+``` env
+PRODUCTION=false
+DATABASE_URL=postgresql://user:password@localhost:5432/medical_appointment_dev
+OPENAI_API_KEY=<your_api_key>
+BRAINTRUST_API_KEY=<your_api_key>
+```
+
+------------------------------------------------------------------------
+
+### Start Backend Server
+
+#### 7. Run FastAPI in development mode
+
+``` bash
+fastapi dev main.py
+```
+
+------------------------------------------------------------------------
+
+### Frontend Setup
+
+#### 8. Move to the frontend directory
+
+``` bash
+cd frontend
+```
+
+#### 9. Install frontend dependencies
+
+``` bash
+npm install
+```
+
+#### 10. Start the frontend development server
+
+``` bash
+npm run dev
+```
+
+------------------------------------------------------------------------
+
+### Seed Dummy Data
+
+#### 11. Insert dummy data into the database
+Insert dummy data into patients and appointments table.
+
+------------------------------------------------------------------------
+
+### Access the Application
+
+-   Backend API: http://localhost:8000/docs
+-   Frontend: http://localhost:5173
+

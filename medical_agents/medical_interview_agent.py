@@ -1,5 +1,3 @@
-from pathlib import Path
-
 from openai.types.shared import Reasoning
 from agents import Agent, ModelSettings
 

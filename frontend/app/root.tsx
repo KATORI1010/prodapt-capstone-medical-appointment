@@ -1,9 +1,9 @@
 import { Outlet } from "react-router"
 import appStylesHref from "./app.css?url"
-import { authMiddleware } from "./middleware";
+// import { authMiddleware } from "./middleware";
 import type { Route } from "./+types/root";
 
-export const clientMiddleware: Route.ClientMiddlewareFunction[] = [authMiddleware];
+// export const clientMiddleware: Route.ClientMiddlewareFunction[] = [authMiddleware];
 
 export default function App() {
   return (
@@ -21,25 +21,3 @@ export default function App() {
     </html>
   );
 }
-
-
-// import type { Route } from "./+types/root";
-// import "./app.css"
-// import { Outlet } from "react-router";
-
-// import { authMiddleware } from "./middleware";
-
-// export const clientMiddleware: Route.ClientMiddlewareFunction[] = [authMiddleware];
-
-// export default function App() {
-//   return (
-//     <html>
-//       <head>
-//         <title>Jobify</title>
-//       </head>
-//       <body>
-//         <Outlet></Outlet>
-//       </body>
-//     </html>
-//   );
-// }
